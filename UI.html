@@ -1049,7 +1049,8 @@
         target: target,
         pagination: {
           startPosition: 1,
-          maxResults: parseInt(document.getElementById('maxResults')?.value || 1000)
+          maxResults: parseInt(document.getElementById('maxResults')?.value || 1000),
+          fetchAll: false
         }
       };
       

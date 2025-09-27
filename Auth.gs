@@ -285,7 +285,6 @@ function makeAuthenticatedRequest(url, options = {}) {
     // Refresh token if needed
     refreshAccessToken();
     
-    const token = service.getAccessToken();
     const realmId = PropertiesService.getUserProperties().getProperty('QBO_REALM_ID');
     
     if (!realmId) {
@@ -296,7 +295,6 @@ function makeAuthenticatedRequest(url, options = {}) {
     const requestOptions = {
       ...options,
       headers: {
-        'Authorization': 'Bearer ' + token,
         'Accept': 'application/json',
         'Content-Type': options.method === 'POST' ? 'application/json' : 'application/x-www-form-urlencoded',
         ...(options.headers || {})
@@ -304,28 +302,83 @@ function makeAuthenticatedRequest(url, options = {}) {
       muteHttpExceptions: true
     };
     
-    // Make the request
-    const response = UrlFetchApp.fetch(url, requestOptions);
-    const responseCode = response.getResponseCode();
-    
-    // Handle 401 - token expired or invalid
-    if (responseCode === 401) {
-      logAction('auth_401_error', { url: url });
-      
-      // Try to refresh and retry once
-      service.refresh();
-      const newToken = service.getAccessToken();
-      requestOptions.headers['Authorization'] = 'Bearer ' + newToken;
-      
-      const retryResponse = UrlFetchApp.fetch(url, requestOptions);
-      return retryResponse;
-    }
-    
-    return response;
+    return fetchWithRetry(url, requestOptions, service);
   } catch (error) {
     console.error('Authenticated request error:', error);
     throw error;
   }
+}
+
+function fetchWithRetry(url, requestOptions, service) {
+  const maxAttempts = 4;
+  const baseDelayMs = 750;
+  let attempt = 0;
+  let lastError = null;
+  const originalUrl = url;
+
+  while (attempt < maxAttempts) {
+    try {
+      if (!requestOptions.headers) {
+        requestOptions.headers = {};
+      }
+      requestOptions.headers['Authorization'] = 'Bearer ' + service.getAccessToken();
+
+      const response = UrlFetchApp.fetch(url, requestOptions);
+      const responseCode = response.getResponseCode();
+
+      if (responseCode === 401) {
+        logAction('auth_401_error', { url: originalUrl });
+        service.refresh();
+        attempt++;
+        continue;
+      }
+
+      if (responseCode === 429 || (responseCode >= 500 && responseCode < 600)) {
+        const retryAfterHeader = response.getHeaders()['Retry-After'];
+        const retrySeconds = retryAfterHeader ? parseInt(retryAfterHeader, 10) : null;
+        const delay = retrySeconds ? retrySeconds * 1000 : Math.pow(2, attempt) * baseDelayMs;
+
+        logAction('qbo_retry', {
+          url: originalUrl,
+          http_status: responseCode,
+          attempt: attempt + 1,
+          retry_after_ms: delay,
+          intuit_tid: response.getHeaders()['intuit_tid'] || null
+        });
+
+        Utilities.sleep(Math.min(delay, 60000));
+        attempt++;
+        continue;
+      }
+
+      return response;
+    } catch (error) {
+      lastError = error;
+      logAction('qbo_fetch_error', {
+        url: originalUrl,
+        attempt: attempt + 1,
+        error: error.toString()
+      });
+      Utilities.sleep(Math.pow(2, attempt) * baseDelayMs);
+      attempt++;
+    }
+  }
+
+  if (lastError) {
+    logAction('qbo_retry_exhausted', {
+      url: originalUrl,
+      attempts: attempt,
+      error_message: lastError.toString()
+    });
+    throw lastError;
+  }
+
+  logAction('qbo_retry_exhausted', {
+    url: originalUrl,
+    attempts: attempt,
+    error_message: 'Unknown error'
+  });
+  throw new Error('Request failed after multiple attempts');
 }
 
 /**

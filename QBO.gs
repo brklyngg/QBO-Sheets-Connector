@@ -26,6 +26,8 @@ const QUERYABLE_ENTITIES = [
   'Term', 'TimeActivity', 'Transfer', 'Vendor', 'VendorCredit'
 ];
 
+const QBO_MAX_PAGE_SIZE = 1000;
+
 /**
  * Gets the base URL for QBO API calls
  */
@@ -44,8 +46,8 @@ function fetchCompanyInfo() {
       throw new Error('No QuickBooks company connected');
     }
     
-    const url = `${getQBOBaseUrl()}/${QBO_API_VERSION}/company/${realmId}/companyinfo/${realmId}`;
     const minorVersion = getConfig('minorVersion', DEFAULT_MINOR_VERSION);
+    const url = `${getQBOBaseUrl()}/${QBO_API_VERSION}/company/${realmId}/companyinfo/${realmId}?minorversion=${minorVersion}`;
     
     const startTime = new Date().getTime();
     const response = makeAuthenticatedRequest(url, {
@@ -56,9 +58,10 @@ function fetchCompanyInfo() {
       }
     });
     const elapsedMs = new Date().getTime() - startTime;
-    
+    const headers = response.getHeaders();
     const responseCode = response.getResponseCode();
-    const intuitTid = response.getHeaders()['intuit_tid'] || '';
+    const intuitTid = headers['intuit_tid'] || '';
+    const retryAfter = headers['Retry-After'] || null;
     
     if (responseCode === 200) {
       const data = JSON.parse(response.getContentText());
@@ -73,7 +76,8 @@ function fetchCompanyInfo() {
         companyName: companyInfo.CompanyName,
         http_status: responseCode,
         intuit_tid: intuitTid,
-        elapsed_ms: elapsedMs
+        elapsed_ms: elapsedMs,
+        retry_after: retryAfter
       });
       
       return companyInfo;
@@ -85,7 +89,8 @@ function fetchCompanyInfo() {
         http_status: responseCode,
         error_message: errorText,
         intuit_tid: intuitTid,
-        elapsed_ms: elapsedMs
+        elapsed_ms: elapsedMs,
+        retry_after: retryAfter
       });
       
       throw new Error(`Failed to fetch company info: ${responseCode} - ${errorText}`);
@@ -137,8 +142,10 @@ function runStandardReport(reportType, params = {}) {
     });
     const elapsedMs = new Date().getTime() - startTime;
     
+    const headers = response.getHeaders();
     const responseCode = response.getResponseCode();
-    const intuitTid = response.getHeaders()['intuit_tid'] || '';
+    const intuitTid = headers['intuit_tid'] || '';
+    const retryAfter = headers['Retry-After'] || null;
     const responseBytes = response.getBlob().getBytes().length;
     
     const logEntry = {
@@ -155,7 +162,8 @@ function runStandardReport(reportType, params = {}) {
       intuit_tid: intuitTid,
       qbo_endpoint: url,
       response_bytes: responseBytes,
-      method: 'GET'
+      method: 'GET',
+      retry_after: retryAfter
     };
     
     if (responseCode === 200) {
@@ -164,7 +172,8 @@ function runStandardReport(reportType, params = {}) {
       logAction('run_standard_report', {
         ...logEntry,
         status: 'success',
-        rows: data.Rows ? data.Rows.length : 0
+        rows: data.Rows ? data.Rows.length : 0,
+        retry_after: retryAfter
       });
       
       return {
@@ -174,7 +183,7 @@ function runStandardReport(reportType, params = {}) {
       };
     } else if (responseCode === 429) {
       // Rate limit error
-      const retryAfter = response.getHeaders()['Retry-After'] || '60';
+      const retryAfterHeader = retryAfter || '60';
       const errorData = parseQBOError(response);
       
       logAction('run_standard_report', {
@@ -182,14 +191,14 @@ function runStandardReport(reportType, params = {}) {
         status: 'error',
         error_code: '429',
         error_message: 'Rate limit exceeded',
-        retry_after: retryAfter
+        retry_after: retryAfterHeader
       });
       
       return {
         success: false,
         error: 'Rate limit exceeded',
         errorCode: 429,
-        retryAfter: parseInt(retryAfter),
+        retryAfter: parseInt(retryAfterHeader, 10),
         intuitTid: intuitTid
       };
     } else {
@@ -199,7 +208,8 @@ function runStandardReport(reportType, params = {}) {
         ...logEntry,
         status: 'error',
         error_code: errorData.code,
-        error_message: errorData.message
+        error_message: errorData.message,
+        retry_after: retryAfter
       });
       
       return {
@@ -228,149 +238,179 @@ function runStandardReport(reportType, params = {}) {
 /**
  * Runs a custom query
  */
-function runCustomQuery(query, startPosition = 1, maxResults = 1000) {
+function runCustomQuery(query, startPosition = 1, maxResults = 1000, options = {}) {
   try {
     const realmId = PropertiesService.getUserProperties().getProperty('QBO_REALM_ID');
     if (!realmId) {
       throw new Error('No QuickBooks company connected');
     }
-    
-    // Parse and validate query
+
     const parsedQuery = parseQuery(query);
     if (!parsedQuery.valid) {
       throw new Error(`Invalid query: ${parsedQuery.error}`);
     }
-    
-    // Build final query with pagination
-    let finalQuery = query.trim();
-    if (!finalQuery.toLowerCase().includes('startposition')) {
-      finalQuery += ` STARTPOSITION ${startPosition}`;
-    }
-    if (!finalQuery.toLowerCase().includes('maxresults')) {
-      finalQuery += ` MAXRESULTS ${maxResults}`;
-    }
-    
+
+    const fetchAll = options.fetchAll === true;
+    const maxPages = options.maxPages || 50;
+    const pageSize = Math.max(1, Math.min(QBO_MAX_PAGE_SIZE, parseInt(maxResults, 10) || QBO_MAX_PAGE_SIZE));
+    let currentStart = Math.max(1, parseInt(startPosition, 10) || 1);
+
+    const baseQuery = stripQueryPaginationClauses(query.trim());
     const minorVersion = getConfig('minorVersion', DEFAULT_MINOR_VERSION);
-    
-    // Determine transport method
-    const usePost = finalQuery.length > 2000;
     const endpoint = `${getQBOBaseUrl()}/${QBO_API_VERSION}/company/${realmId}/query`;
-    
-    const startTime = new Date().getTime();
-    let response;
-    
-    if (usePost) {
-      // Use POST for long queries
-      response = makeAuthenticatedRequest(endpoint + `?minorversion=${minorVersion}`, {
-        method: 'POST',
-        headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/text'
-        },
-        payload: finalQuery
-      });
-    } else {
-      // Use GET for short queries
-      const encodedQuery = encodeURIComponent(finalQuery);
-      response = makeAuthenticatedRequest(`${endpoint}?query=${encodedQuery}&minorversion=${minorVersion}`, {
-        method: 'GET',
-        headers: {
-          'Accept': 'application/json'
+
+    const aggregatedEntities = [];
+    let totalCount = 0;
+    let fetchedPages = 0;
+    let hasMore = false;
+    let nextStartPosition = currentStart;
+    let intuitTid = '';
+
+    while (true) {
+      fetchedPages++;
+      const paginatedQuery = appendQueryPaginationClauses(baseQuery, currentStart, pageSize);
+      const usePost = paginatedQuery.length > 2000;
+
+      const requestStart = new Date().getTime();
+      let response;
+
+      if (usePost) {
+        response = makeAuthenticatedRequest(`${endpoint}?minorversion=${minorVersion}`, {
+          method: 'POST',
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/text'
+          },
+          payload: paginatedQuery
+        });
+      } else {
+        const encodedQuery = encodeURIComponent(paginatedQuery);
+        response = makeAuthenticatedRequest(`${endpoint}?query=${encodedQuery}&minorversion=${minorVersion}`, {
+          method: 'GET',
+          headers: {
+            'Accept': 'application/json'
+          }
+        });
+      }
+
+      const elapsedMs = new Date().getTime() - requestStart;
+      const responseCode = response.getResponseCode();
+      const headers = response.getHeaders();
+      const retryAfter = headers['Retry-After'] || null;
+      const responseBytes = response.getBlob().getBytes().length;
+
+      const logEntry = {
+        action: 'run_custom_query',
+        dataset_type: 'query',
+        method: usePost ? 'POST' : 'GET',
+        query_select: parsedQuery.select,
+        query_from: parsedQuery.from,
+        query_where: parsedQuery.where,
+        query_orderby: parsedQuery.orderBy,
+        query_startposition: currentStart.toString(),
+        query_maxresults: pageSize.toString(),
+        realmId: realmId,
+        minorversion: minorVersion,
+        elapsed_ms: elapsedMs,
+        http_status: responseCode,
+        intuit_tid: headers['intuit_tid'] || '',
+        qbo_endpoint: endpoint,
+        response_bytes: responseBytes,
+        transport: usePost ? 'POST' : 'GET',
+        retry_after: retryAfter,
+        page_index: fetchedPages
+      };
+
+      if (responseCode === 200) {
+        const data = JSON.parse(response.getContentText());
+        const queryResponse = data.QueryResponse || {};
+        const entities = queryResponse[parsedQuery.from] || [];
+        aggregatedEntities.push(...entities);
+        totalCount = queryResponse.totalCount != null ? queryResponse.totalCount : (totalCount || aggregatedEntities.length);
+        const returnedCount = entities.length;
+        const startFromResponse = queryResponse.startPosition || currentStart;
+        nextStartPosition = startFromResponse + returnedCount;
+        intuitTid = headers['intuit_tid'] || intuitTid;
+
+        const moreByTotal = queryResponse.totalCount != null ? (startFromResponse - 1 + returnedCount) < queryResponse.totalCount : false;
+        const moreByBatch = returnedCount === pageSize;
+        const progressed = nextStartPosition > currentStart;
+        hasMore = (moreByTotal || moreByBatch) && progressed;
+
+        logEntry.status = 'success';
+        logEntry.rows = returnedCount;
+        logEntry.total_count = queryResponse.totalCount || null;
+        logAction('run_custom_query', logEntry);
+
+        if (!fetchAll || !hasMore || fetchedPages >= maxPages || returnedCount === 0) {
+          if (fetchAll && hasMore && fetchedPages >= maxPages) {
+            // Reached page ceiling; indicate more data remains.
+            hasMore = true;
+          }
+          break;
         }
-      });
-    }
-    
-    const elapsedMs = new Date().getTime() - startTime;
-    const responseCode = response.getResponseCode();
-    const intuitTid = response.getHeaders()['intuit_tid'] || '';
-    const responseBytes = response.getBlob().getBytes().length;
-    
-    const logEntry = {
-      action: 'run_custom_query',
-      dataset_type: 'query',
-      method: usePost ? 'POST' : 'GET',
-      query_select: parsedQuery.select,
-      query_from: parsedQuery.from,
-      query_where: parsedQuery.where,
-      query_orderby: parsedQuery.orderBy,
-      query_startposition: startPosition.toString(),
-      query_maxresults: maxResults.toString(),
-      realmId: realmId,
-      minorversion: minorVersion,
-      elapsed_ms: elapsedMs,
-      http_status: responseCode,
-      intuit_tid: intuitTid,
-      qbo_endpoint: endpoint,
-      response_bytes: responseBytes,
-      transport: usePost ? 'POST' : 'GET'
-    };
-    
-    if (responseCode === 200) {
-      const data = JSON.parse(response.getContentText());
-      const queryResponse = data.QueryResponse || {};
-      const entities = queryResponse[parsedQuery.from] || [];
-      
-      logAction('run_custom_query', {
-        ...logEntry,
-        status: 'success',
-        rows: entities.length
-      });
-      
-      return {
-        success: true,
-        data: entities,
-        totalCount: queryResponse.totalCount || entities.length,
-        startPosition: queryResponse.startPosition || startPosition,
-        maxResults: queryResponse.maxResults || maxResults,
-        intuitTid: intuitTid
-      };
-    } else if (responseCode === 429) {
-      // Rate limit error
-      const retryAfter = response.getHeaders()['Retry-After'] || '60';
-      
-      logAction('run_custom_query', {
-        ...logEntry,
-        status: 'error',
-        error_code: '429',
-        error_message: 'Rate limit exceeded',
-        retry_after: retryAfter
-      });
-      
-      return {
-        success: false,
-        error: 'Rate limit exceeded',
-        errorCode: 429,
-        retryAfter: parseInt(retryAfter),
-        intuitTid: intuitTid
-      };
-    } else {
+
+        currentStart = nextStartPosition;
+        continue;
+      }
+
+      if (responseCode === 429) {
+        const retryAfterHeader = retryAfter || '60';
+        logAction('run_custom_query', {
+          ...logEntry,
+          status: 'error',
+          error_code: '429',
+          error_message: 'Rate limit exceeded',
+          retry_after: retryAfterHeader
+        });
+
+        return {
+          success: false,
+          error: 'Rate limit exceeded',
+          errorCode: 429,
+          retryAfter: parseInt(retryAfterHeader, 10) || null,
+          intuitTid: headers['intuit_tid'] || ''
+        };
+      }
+
       const errorData = parseQBOError(response);
-      
       logAction('run_custom_query', {
         ...logEntry,
         status: 'error',
         error_code: errorData.code,
         error_message: errorData.message
       });
-      
+
       return {
         success: false,
         error: errorData.message,
         errorCode: responseCode,
         errorDetail: errorData.detail,
-        intuitTid: intuitTid
+        intuitTid: headers['intuit_tid'] || ''
       };
     }
+
+    return {
+      success: true,
+      data: aggregatedEntities,
+      totalCount: totalCount || aggregatedEntities.length,
+      startPosition: startPosition,
+      maxResults: pageSize,
+      intuitTid: intuitTid,
+      hasMore: hasMore,
+      nextStartPosition: hasMore ? nextStartPosition : null,
+      fetchedPages: fetchedPages
+    };
   } catch (error) {
     console.error('Error running custom query:', error);
-    
+
     logAction('run_custom_query', {
       action: 'run_custom_query',
       dataset_type: 'query',
       status: 'error',
       error_message: error.toString()
     });
-    
+
     throw error;
   }
 }
@@ -628,6 +668,21 @@ function getAvailableReports() {
     name: SUPPORTED_REPORTS[key],
     displayName: formatReportName(key)
   }));
+}
+
+function stripQueryPaginationClauses(queryText) {
+  if (!queryText) {
+    return '';
+  }
+  return queryText
+    .replace(/\s+STARTPOSITION\s+\d+/ig, '')
+    .replace(/\s+MAXRESULTS\s+\d+/ig, '')
+    .trim();
+}
+
+function appendQueryPaginationClauses(baseQuery, startPosition, maxResults) {
+  const sanitized = (baseQuery || '').trim();
+  return `${sanitized} STARTPOSITION ${startPosition} MAXRESULTS ${maxResults}`.trim();
 }
 
 /**

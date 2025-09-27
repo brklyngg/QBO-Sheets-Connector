@@ -6,6 +6,7 @@
 // Dataset storage key prefix
 const DATASET_PREFIX = 'dataset_';
 const DATASETS_INDEX_KEY = 'datasets_index';
+const DATASET_MAX_RESULTS = 1000;
 
 /**
  * Dataset model structure
@@ -15,9 +16,9 @@ const DATASETS_INDEX_KEY = 'datasets_index';
  *   name: string,
  *   params: object,
  *   target: {sheetId: string, anchorA1: string, allowResize: boolean},
- *   pagination: {startPosition: number, maxResults: number},
+ *   pagination: {startPosition: number, maxResults: number, fetchAll: boolean},
  *   schedule: {enabled: boolean, freq: string, timeOfDay: string},
- *   lastWrite: {rows: number, cols: number, wroteAt: string, sheetId: string, rangeA1: string, schemaHash: string}
+ *   lastWrite: {rows: number, cols: number, wroteAt: string, sheetId: string, sheetName: string, rangeA1: string, schemaHash: string}
  * }
  */
 
@@ -40,7 +41,10 @@ function getDatasets() {
       const datasetData = userProperties.getProperty(DATASET_PREFIX + id);
       if (datasetData) {
         try {
-          datasets.push(JSON.parse(datasetData));
+          const parsed = JSON.parse(datasetData);
+          parsed.target = normalizeDatasetTarget(parsed.target || {}, parsed.name);
+          parsed.pagination = normalizeDatasetPagination(parsed.pagination);
+          datasets.push(parsed);
         } catch (e) {
           console.error('Error parsing dataset:', id, e);
         }
@@ -66,7 +70,10 @@ function getDatasetById(datasetId) {
       return null;
     }
     
-    return JSON.parse(datasetData);
+    const parsed = JSON.parse(datasetData);
+    parsed.target = normalizeDatasetTarget(parsed.target || {}, parsed.name);
+    parsed.pagination = normalizeDatasetPagination(parsed.pagination);
+    return parsed;
   } catch (error) {
     console.error('Error getting dataset:', error);
     return null;
@@ -79,6 +86,7 @@ function getDatasetById(datasetId) {
 function createDataset(dataset) {
   try {
     dataset.target = normalizeDatasetTarget(dataset.target || {}, dataset.name);
+    dataset.pagination = normalizeDatasetPagination(dataset.pagination);
 
     // Validate dataset
     const validation = validateDataset(dataset);
@@ -96,13 +104,6 @@ function createDataset(dataset) {
     dataset.updated = new Date().toISOString();
     dataset.version = 1;
 
-    if (!dataset.pagination) {
-      dataset.pagination = {
-        startPosition: 1,
-        maxResults: 1000
-      };
-    }
-    
     if (!dataset.schedule) {
       dataset.schedule = {
         enabled: false,
@@ -147,6 +148,7 @@ function updateDataset(datasetId, updates) {
     updated.version = (existing.version || 1) + 1;
 
     updated.target = normalizeDatasetTarget(updated.target || existing.target || {}, updated.name);
+    updated.pagination = normalizeDatasetPagination(updated.pagination || existing.pagination);
 
     // Validate updated dataset
     const validation = validateDataset(updated);
@@ -278,6 +280,20 @@ function runDataset(datasetId) {
         updates.target = Object.assign({}, dataset.target || {}, result.targetUpdates);
       }
 
+      if (dataset.type === 'query') {
+        const currentPagination = normalizeDatasetPagination(dataset.pagination);
+        const originalStart = currentPagination.startPosition;
+        const fetchAll = currentPagination.fetchAll === true;
+        if (!fetchAll) {
+          if (result.hasMore && result.nextStartPosition) {
+            currentPagination.startPosition = result.nextStartPosition;
+          } else {
+            currentPagination.startPosition = originalStart;
+          }
+        }
+        updates.pagination = currentPagination;
+      }
+
       updateDataset(datasetId, updates);
       
       return job;
@@ -371,11 +387,13 @@ function runQueryDataset(dataset, jobId) {
   try {
     updateJobProgress(jobId, 20, 'Executing query...');
     
-    // Run the query
+    const pagination = normalizeDatasetPagination(dataset.pagination);
+    const fetchAll = pagination.fetchAll === true;
     const queryResult = runCustomQuery(
       dataset.params.query,
-      dataset.pagination.startPosition,
-      dataset.pagination.maxResults
+      pagination.startPosition,
+      pagination.maxResults,
+      { fetchAll: fetchAll }
     );
     
     if (!queryResult.success) {
@@ -408,9 +426,27 @@ function runQueryDataset(dataset, jobId) {
       status: 'success',
       job_id: jobId,
       intuit_tid: queryResult.intuitTid,
-      total_count: queryResult.totalCount
+      total_count: queryResult.totalCount,
+      fetched_pages: queryResult.fetchedPages || 1,
+      has_more: queryResult.hasMore
     });
-    
+
+    if (queryResult.hasMore && !fetchAll) {
+      logAction('run_dataset_partial', {
+        dataset_id: dataset.id,
+        dataset_type: dataset.type,
+        next_start_position: queryResult.nextStartPosition,
+        message: 'Additional records available beyond configured maxResults'
+      });
+    } else if (queryResult.hasMore && fetchAll) {
+      logAction('run_dataset_partial', {
+        dataset_id: dataset.id,
+        dataset_type: dataset.type,
+        next_start_position: queryResult.nextStartPosition,
+        message: 'Fetch-all limit reached before retrieving all records'
+      });
+    }
+
     return {
       success: true,
       lastWrite: {
@@ -422,7 +458,9 @@ function runQueryDataset(dataset, jobId) {
         rangeA1: writeResult.rangeA1,
         schemaHash: generateSchemaHash(sheetData.data[0] || [])
       },
-      targetUpdates: writeResult.targetUpdates
+      targetUpdates: writeResult.targetUpdates,
+      nextStartPosition: queryResult.nextStartPosition,
+      hasMore: queryResult.hasMore
     };
   } catch (error) {
     logAction('run_dataset', {
@@ -644,7 +682,15 @@ function validateDataset(dataset) {
   if (!dataset.target.anchorA1 || !/^[A-Z]+[1-9][0-9]*$/.test(dataset.target.anchorA1)) {
     return { valid: false, error: 'Invalid anchor cell. Use A1 notation.' };
   }
-  
+
+  if (!dataset.pagination) {
+    return { valid: false, error: 'Pagination configuration is required' };
+  }
+
+  if (!dataset.pagination.maxResults || dataset.pagination.maxResults < 1) {
+    return { valid: false, error: 'Pagination max results must be greater than 0' };
+  }
+
   return { valid: true };
 }
 
@@ -706,6 +752,20 @@ function normalizeDatasetTarget(target, datasetName) {
   normalized.anchorA1 = sanitizeAnchorCell(normalized.anchorA1);
   normalized.allowResize = normalized.allowResize !== false;
   normalized.namedRange = normalized.namedRange || '';
+  return normalized;
+}
+
+function normalizeDatasetPagination(pagination) {
+  const normalized = Object.assign({
+    startPosition: 1,
+    maxResults: DATASET_MAX_RESULTS,
+    fetchAll: false
+  }, pagination || {});
+
+  normalized.startPosition = Math.max(1, parseInt(normalized.startPosition, 10) || 1);
+  normalized.maxResults = Math.max(1, Math.min(DATASET_MAX_RESULTS, parseInt(normalized.maxResults, 10) || DATASET_MAX_RESULTS));
+  normalized.fetchAll = normalized.fetchAll === true;
+
   return normalized;
 }
 

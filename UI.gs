@@ -359,6 +359,7 @@ function importDatasetConfig(configJson, newName) {
   try {
     const config = JSON.parse(configJson);
     config.target = normalizeDatasetTarget(config.target || {}, config.name);
+    config.pagination = normalizeDatasetPagination(config.pagination);
 
     // Validate the configuration
     const validation = validateDataset(config);

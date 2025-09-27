@@ -358,7 +358,8 @@ function exportDatasetConfig(datasetId) {
 function importDatasetConfig(configJson, newName) {
   try {
     const config = JSON.parse(configJson);
-    
+    config.target = normalizeDatasetTarget(config.target || {}, config.name);
+
     // Validate the configuration
     const validation = validateDataset(config);
     if (!validation.valid) {

@@ -78,6 +78,8 @@ function getDatasetById(datasetId) {
  */
 function createDataset(dataset) {
   try {
+    dataset.target = normalizeDatasetTarget(dataset.target || {}, dataset.name);
+
     // Validate dataset
     const validation = validateDataset(dataset);
     if (!validation.valid) {
@@ -93,7 +95,7 @@ function createDataset(dataset) {
     dataset.created = new Date().toISOString();
     dataset.updated = new Date().toISOString();
     dataset.version = 1;
-    
+
     if (!dataset.pagination) {
       dataset.pagination = {
         startPosition: 1,
@@ -143,7 +145,9 @@ function updateDataset(datasetId, updates) {
     const updated = Object.assign({}, existing, updates);
     updated.updated = new Date().toISOString();
     updated.version = (existing.version || 1) + 1;
-    
+
+    updated.target = normalizeDatasetTarget(updated.target || existing.target || {}, updated.name);
+
     // Validate updated dataset
     const validation = validateDataset(updated);
     if (!validation.valid) {
@@ -265,11 +269,16 @@ function runDataset(datasetId) {
       userProperties.setProperty('job_' + jobId, JSON.stringify(job));
       globalJobStatus = job;
       
-      // Update dataset lastWrite
-      const updatedDataset = Object.assign({}, dataset, {
+      // Update dataset metadata
+      const updates = {
         lastWrite: result.lastWrite
-      });
-      updateDataset(datasetId, updatedDataset);
+      };
+
+      if (result.targetUpdates) {
+        updates.target = Object.assign({}, dataset.target || {}, result.targetUpdates);
+      }
+
+      updateDataset(datasetId, updates);
       
       return job;
     } catch (error) {
@@ -315,7 +324,7 @@ function runStandardReportDataset(dataset, jobId) {
     const writeResult = writeDataToSheet(dataset, sheetData.data);
     
     updateJobProgress(jobId, 90, 'Finalizing...');
-    
+
     // Log success
     logAction('run_dataset', {
       dataset_id: dataset.id,
@@ -335,9 +344,11 @@ function runStandardReportDataset(dataset, jobId) {
         cols: sheetData.cols,
         wroteAt: new Date().toISOString(),
         sheetId: writeResult.sheetId,
+        sheetName: writeResult.sheetName,
         rangeA1: writeResult.rangeA1,
         schemaHash: generateSchemaHash(sheetData.data[0] || [])
-      }
+      },
+      targetUpdates: writeResult.targetUpdates
     };
   } catch (error) {
     logAction('run_dataset', {
@@ -407,9 +418,11 @@ function runQueryDataset(dataset, jobId) {
         cols: sheetData.cols,
         wroteAt: new Date().toISOString(),
         sheetId: writeResult.sheetId,
+        sheetName: writeResult.sheetName,
         rangeA1: writeResult.rangeA1,
         schemaHash: generateSchemaHash(sheetData.data[0] || [])
-      }
+      },
+      targetUpdates: writeResult.targetUpdates
     };
   } catch (error) {
     logAction('run_dataset', {
@@ -430,38 +443,68 @@ function runQueryDataset(dataset, jobId) {
 function writeDataToSheet(dataset, data) {
   try {
     const ss = SpreadsheetApp.getActiveSpreadsheet();
-    let sheet;
-    
-    // Get or create target sheet
-    if (dataset.target.sheetId) {
-      // Try to find sheet by ID
-      const sheets = ss.getSheets();
-      sheet = sheets.find(s => s.getSheetId() === parseInt(dataset.target.sheetId));
-      
-      if (!sheet) {
-        // Create new sheet if not found
-        sheet = ss.insertSheet(dataset.name);
-      }
+    const originalTarget = dataset.target || {};
+    const target = normalizeDatasetTarget(originalTarget, dataset.name);
+    const targetUpdates = {};
+
+    let sheet = null;
+
+    const sheetId = target.sheetId ? parseInt(target.sheetId, 10) : null;
+    if (sheetId) {
+      sheet = ss.getSheets().find(s => s.getSheetId() === sheetId) || null;
+    }
+
+    if (!sheet && target.sheetName) {
+      sheet = ss.getSheetByName(target.sheetName) || null;
+    }
+
+    if (!sheet) {
+      const newSheetName = ensureUniqueSheetName(ss, target.sheetName || dataset.name || 'QBO Data');
+      sheet = ss.insertSheet(newSheetName);
+      targetUpdates.sheetName = sheet.getName();
+      targetUpdates.sheetId = sheet.getSheetId().toString();
     } else {
-      // Create new sheet with dataset name
-      const sheetName = dataset.name || 'QBO Data';
-      sheet = ss.getSheetByName(sheetName);
-      
-      if (!sheet) {
-        sheet = ss.insertSheet(sheetName);
+      const currentSheetId = sheet.getSheetId().toString();
+      if (!target.sheetId || target.sheetId !== currentSheetId) {
+        targetUpdates.sheetId = currentSheetId;
+      }
+      if (!target.sheetName || target.sheetName !== sheet.getName()) {
+        targetUpdates.sheetName = sheet.getName();
       }
     }
-    
-    // Clear existing data if not using anchor
-    const anchorA1 = dataset.target.anchorA1 || 'A1';
+
+    const originalAnchor = originalTarget.anchorA1 ? originalTarget.anchorA1.toString().trim().toUpperCase() : '';
+    const anchorA1 = sanitizeAnchorCell(target.anchorA1);
+    if (originalAnchor !== anchorA1) {
+      targetUpdates.anchorA1 = anchorA1;
+    }
+
+    if (typeof originalTarget.allowResize !== 'boolean') {
+      targetUpdates.allowResize = target.allowResize;
+    } else if (originalTarget.allowResize !== target.allowResize) {
+      targetUpdates.allowResize = target.allowResize;
+    }
+
+    if ((originalTarget.namedRange || '') !== target.namedRange) {
+      targetUpdates.namedRange = target.namedRange;
+    }
+
     const anchorCell = sheet.getRange(anchorA1);
     const startRow = anchorCell.getRow();
     const startCol = anchorCell.getColumn();
-    
-    if (anchorA1 === 'A1' && !dataset.target.allowResize) {
-      sheet.clear();
+
+    // Clear previous write range if available
+    if (dataset.lastWrite && dataset.lastWrite.sheetId && dataset.lastWrite.rangeA1) {
+      const lastSheetId = dataset.lastWrite.sheetId.toString();
+      if (lastSheetId === sheet.getSheetId().toString()) {
+        try {
+          sheet.getRange(dataset.lastWrite.rangeA1).clearContent();
+        } catch (clearError) {
+          console.warn('Failed to clear previous range', clearError);
+        }
+      }
     }
-    
+
     // Check data size limits
     const totalCells = data.length * (data[0] ? data[0].length : 0);
     const maxCellsWarning = parseInt(getConfig('maxCellsWarning', '2000000'));
@@ -477,34 +520,38 @@ function writeDataToSheet(dataset, data) {
     
     // Write data
     if (data.length > 0 && data[0].length > 0) {
-      const range = sheet.getRange(startRow, startCol, data.length, data[0].length);
+      const numRows = data.length;
+      const numCols = data[0].length;
+      const range = sheet.getRange(startRow, startCol, numRows, numCols);
       range.setValues(data);
-      
+
       // Format header row
       if (startRow === 1 || anchorA1 === 'A1') {
-        const headerRange = sheet.getRange(startRow, startCol, 1, data[0].length);
+        const headerRange = sheet.getRange(startRow, startCol, 1, numCols);
         headerRange.setFontWeight('bold');
         headerRange.setBackground('#f0f0f0');
       }
-      
+
       // Auto-resize columns if allowed
-      if (dataset.target.allowResize) {
-        for (let i = 0; i < data[0].length; i++) {
+      if (target.allowResize) {
+        for (let i = 0; i < numCols; i++) {
           sheet.autoResizeColumn(startCol + i);
         }
       }
-      
+
       // Create or update named range
-      if (dataset.target.namedRange) {
-        updateNamedRange(sheet, dataset.target.namedRange, range);
+      const namedRange = target.namedRange;
+      if (namedRange) {
+        updateNamedRange(sheet, namedRange, range);
       }
-      
+
       return {
         sheetId: sheet.getSheetId().toString(),
         sheetName: sheet.getName(),
         rangeA1: range.getA1Notation(),
-        rows: data.length,
-        cols: data[0].length
+        rows: numRows,
+        cols: numCols,
+        targetUpdates: Object.keys(targetUpdates).length ? targetUpdates : null
       };
     } else {
       // No data to write
@@ -513,7 +560,8 @@ function writeDataToSheet(dataset, data) {
         sheetName: sheet.getName(),
         rangeA1: anchorA1,
         rows: 0,
-        cols: 0
+        cols: 0,
+        targetUpdates: Object.keys(targetUpdates).length ? targetUpdates : null
       };
     }
   } catch (error) {
@@ -588,6 +636,14 @@ function validateDataset(dataset) {
   if (!dataset.target) {
     return { valid: false, error: 'Target configuration is required' };
   }
+
+  if (!dataset.target.sheetName || dataset.target.sheetName.toString().trim() === '') {
+    return { valid: false, error: 'Target sheet name is required' };
+  }
+
+  if (!dataset.target.anchorA1 || !/^[A-Z]+[1-9][0-9]*$/.test(dataset.target.anchorA1)) {
+    return { valid: false, error: 'Invalid anchor cell. Use A1 notation.' };
+  }
   
   return { valid: true };
 }
@@ -641,6 +697,35 @@ function generateSchemaHash(headers) {
   return Utilities.computeDigest(Utilities.DigestAlgorithm.MD5, schemaString)
     .map(byte => (byte & 0xFF).toString(16).padStart(2, '0'))
     .join('');
+}
+
+function normalizeDatasetTarget(target, datasetName) {
+  const normalized = Object.assign({}, target || {});
+  normalized.sheetId = normalized.sheetId ? normalized.sheetId.toString() : '';
+  normalized.sheetName = normalized.sheetName || datasetName || 'QBO Data';
+  normalized.anchorA1 = sanitizeAnchorCell(normalized.anchorA1);
+  normalized.allowResize = normalized.allowResize !== false;
+  normalized.namedRange = normalized.namedRange || '';
+  return normalized;
+}
+
+function sanitizeAnchorCell(anchor) {
+  if (!anchor) {
+    return 'A1';
+  }
+  const cleaned = anchor.toString().trim().toUpperCase();
+  const anchorRegex = /^[A-Z]+[1-9][0-9]*$/;
+  return anchorRegex.test(cleaned) ? cleaned : 'A1';
+}
+
+function ensureUniqueSheetName(ss, desiredName) {
+  const baseName = desiredName && desiredName.trim() ? desiredName.trim() : 'QBO Data';
+  let name = baseName;
+  let counter = 1;
+  while (ss.getSheetByName(name)) {
+    name = `${baseName} (${counter++})`;
+  }
+  return name;
 }
 
 /**

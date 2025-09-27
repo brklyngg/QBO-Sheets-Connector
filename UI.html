@@ -570,7 +570,29 @@
       
       <div class="form-group">
         <label class="form-label">Target Sheet</label>
-        <input type="text" id="targetSheet" class="form-input" placeholder="Sheet name (optional - uses dataset name if empty)">
+        <select id="targetSheet" class="form-select"></select>
+        <div class="help-text">Choose an existing sheet or create a new one for the dataset output.</div>
+      </div>
+
+      <div class="form-group" id="newSheetNameGroup" style="display: none;">
+        <label class="form-label">New Sheet Name</label>
+        <input type="text" id="newSheetName" class="form-input" placeholder="Leave blank to use dataset name">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Anchor Cell</label>
+        <input type="text" id="anchorCell" class="form-input" value="A1">
+        <div class="help-text">Data writes starting at this cell.</div>
+      </div>
+
+      <div class="checkbox-group">
+        <input type="checkbox" id="allowResize" checked>
+        <label for="allowResize">Auto-resize columns after write</label>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Named Range (optional)</label>
+        <input type="text" id="namedRange" class="form-input" placeholder="Use or create a named range">
       </div>
       
       <div class="button-group">
@@ -608,7 +630,76 @@
     let currentJob = null;
     let jobPollInterval = null;
     let settingsLoaded = false;
+    let availableSheets = [];
     
+    function loadAvailableSheets() {
+      google.script.run
+        .withSuccessHandler(function(sheets) {
+          availableSheets = Array.isArray(sheets) ? sheets : [];
+          refreshSheetSelectors();
+        })
+        .withFailureHandler(function(error) {
+          console.error('Error loading sheets:', error);
+        })
+        .getAvailableSheets();
+    }
+
+    function refreshSheetSelectors() {
+      const createSelect = document.getElementById('targetSheet');
+      const createValue = createSelect ? createSelect.value : '__create_new__';
+      renderSheetOptions('targetSheet', createValue, false);
+      const editSelect = document.getElementById('editTargetSheet');
+      const editValue = editSelect ? editSelect.value : '__create_new__';
+      renderSheetOptions('editTargetSheet', editValue, true);
+    }
+
+    function renderSheetOptions(selectId, selectedValue, includeCurrent = true) {
+      const select = document.getElementById(selectId);
+      if (!select) return;
+
+      const previousValue = selectedValue || select.value;
+      const options = ['<option value="__create_new__">Create new sheet</option>'];
+
+      availableSheets.forEach(sheet => {
+        const value = sheet.id != null ? sheet.id.toString() : '';
+        options.push(`<option value="${value}">${sheet.name}</option>`);
+      });
+
+      select.innerHTML = options.join('');
+
+      if (previousValue && previousValue !== '__create_new__') {
+        const exists = availableSheets.some(sheet => (sheet.id != null ? sheet.id.toString() : '') === previousValue);
+        if (!exists && includeCurrent) {
+          const label = getSheetNameById(previousValue) || previousValue;
+          const option = document.createElement('option');
+          option.value = previousValue;
+          option.textContent = `${label} (missing)`;
+          select.appendChild(option);
+        }
+        select.value = previousValue;
+      } else {
+        select.value = '__create_new__';
+      }
+
+      toggleNewSheetName(select, selectId === 'targetSheet' ? 'newSheetNameGroup' : 'editNewSheetNameGroup');
+    }
+
+    function getSheetNameById(id) {
+      const sheet = availableSheets.find(s => (s.id != null ? s.id.toString() : '') === (id != null ? id.toString() : ''));
+      return sheet ? sheet.name : '';
+    }
+
+    function toggleNewSheetName(selectElement, groupId) {
+      const group = document.getElementById(groupId);
+      if (!group) return;
+      if (!selectElement) {
+        group.style.display = 'none';
+        return;
+      }
+      const value = selectElement.value;
+      group.style.display = value === '__create_new__' ? '' : 'none';
+    }
+
     // Initialize
     document.addEventListener('DOMContentLoaded', function() {
       updateConnectionStatus();
@@ -617,6 +708,7 @@
         loadRecentLogs();
       }
       attachSettingsListeners();
+      loadAvailableSheets();
       loadSettings();
       const defaultTab = (initialTab && typeof initialTab === 'string') ? initialTab : 'datasets';
       switchTab(defaultTab);
@@ -836,10 +928,21 @@
     }
     
     function showCreateDatasetModal() {
+      loadAvailableSheets();
       document.getElementById('createDatasetModal').style.display = 'block';
+      renderSheetOptions('targetSheet', '__create_new__', false);
+      const targetSelect = document.getElementById('targetSheet');
+      targetSelect.onchange = function() {
+        toggleNewSheetName(this, 'newSheetNameGroup');
+      };
+      toggleNewSheetName(targetSelect, 'newSheetNameGroup');
+      document.getElementById('newSheetName').value = '';
+      document.getElementById('anchorCell').value = 'A1';
+      document.getElementById('allowResize').checked = true;
+      document.getElementById('namedRange').value = '';
       document.getElementById('datasetName').focus();
     }
-    
+
     function closeModal(modalId) {
       document.getElementById(modalId).style.display = 'none';
       // Clear form
@@ -848,6 +951,15 @@
         document.getElementById('datasetType').value = '';
         document.getElementById('standardReportConfig').style.display = 'none';
         document.getElementById('queryConfig').style.display = 'none';
+        const targetSelect = document.getElementById('targetSheet');
+        if (targetSelect) {
+          targetSelect.value = '__create_new__';
+        }
+        toggleNewSheetName(targetSelect, 'newSheetNameGroup');
+        document.getElementById('newSheetName').value = '';
+        document.getElementById('anchorCell').value = 'A1';
+        document.getElementById('allowResize').checked = true;
+        document.getElementById('namedRange').value = '';
       }
     }
     
@@ -877,10 +989,26 @@
       }
       
       let params = {};
+      const targetSelect = document.getElementById('targetSheet');
+      const selectedSheetId = targetSelect ? targetSelect.value : '__create_new__';
+      const newSheetName = document.getElementById('newSheetName').value.trim();
+      const anchorCell = (document.getElementById('anchorCell').value || 'A1').trim();
+      const allowResize = document.getElementById('allowResize').checked;
+      const namedRange = document.getElementById('namedRange').value.trim();
+
+      let sheetName = '';
+      if (selectedSheetId === '__create_new__') {
+        sheetName = newSheetName || name;
+      } else {
+        sheetName = getSheetNameById(selectedSheetId) || name;
+      }
+
       let target = {
-        sheetName: document.getElementById('targetSheet').value.trim() || name,
-        anchorA1: 'A1',
-        allowResize: true
+        sheetId: selectedSheetId !== '__create_new__' ? selectedSheetId : '',
+        sheetName: sheetName,
+        anchorA1: anchorCell ? anchorCell.toUpperCase() : 'A1',
+        allowResize: allowResize,
+        namedRange: namedRange
       };
       
       if (type === 'standard') {
@@ -948,7 +1076,16 @@
     function editDataset(datasetId) {
       const dataset = currentDatasets.find(d => d.id === datasetId);
       if (!dataset) return;
-      
+
+      loadAvailableSheets();
+
+      const target = dataset.target || {};
+      const selectedSheetId = target.sheetId || '';
+      const anchorCell = target.anchorA1 || 'A1';
+      const allowResize = target.allowResize !== false;
+      const namedRange = target.namedRange || '';
+      const newSheetNameValue = !selectedSheetId ? (target.sheetName || dataset.name) : '';
+
       // Populate edit form
       const formDiv = document.getElementById('editDatasetForm');
       formDiv.innerHTML = `
@@ -976,11 +1113,47 @@
             <textarea id="editQueryText" class="form-textarea">${dataset.params.query}</textarea>
           </div>
         `}
+
+        <div class="form-group">
+          <label class="form-label">Target Sheet</label>
+          <select id="editTargetSheet" class="form-select"></select>
+          <div class="help-text">Change where this dataset writes data.</div>
+        </div>
+
+        <div class="form-group" id="editNewSheetNameGroup" style="display: none;">
+          <label class="form-label">New Sheet Name</label>
+          <input type="text" id="editNewSheetName" class="form-input" value="${newSheetNameValue}">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Anchor Cell</label>
+          <input type="text" id="editAnchorCell" class="form-input" value="${anchorCell}">
+        </div>
+
+        <div class="checkbox-group">
+          <input type="checkbox" id="editAllowResize" ${allowResize ? 'checked' : ''}>
+          <label for="editAllowResize">Auto-resize columns after write</label>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Named Range (optional)</label>
+          <input type="text" id="editNamedRange" class="form-input" value="${namedRange}">
+        </div>
       `;
       
+      renderSheetOptions('editTargetSheet', selectedSheetId, true);
+      const editSelect = document.getElementById('editTargetSheet');
+      editSelect.onchange = function() {
+        toggleNewSheetName(this, 'editNewSheetNameGroup');
+      };
+      toggleNewSheetName(editSelect, 'editNewSheetNameGroup');
+      if (!selectedSheetId && newSheetNameValue) {
+        document.getElementById('editNewSheetName').value = newSheetNameValue;
+      }
+
       document.getElementById('editDatasetModal').style.display = 'block';
     }
-    
+
     function updateDataset() {
       const datasetId = document.getElementById('editDatasetId').value;
       const dataset = currentDatasets.find(d => d.id === datasetId);
@@ -1001,7 +1174,30 @@
           query: document.getElementById('editQueryText').value.trim()
         };
       }
-      
+
+      const editSelect = document.getElementById('editTargetSheet');
+      const selectedSheetId = editSelect ? editSelect.value : '__create_new__';
+      const newSheetName = (document.getElementById('editNewSheetName')?.value || '').trim();
+      const anchorCell = (document.getElementById('editAnchorCell')?.value || 'A1').trim();
+      const allowResize = document.getElementById('editAllowResize')?.checked;
+      const namedRange = (document.getElementById('editNamedRange')?.value || '').trim();
+
+      let sheetName;
+      if (selectedSheetId === '__create_new__') {
+        sheetName = newSheetName || updates.name || dataset.name;
+      } else {
+        sheetName = getSheetNameById(selectedSheetId) || dataset.target?.sheetName || dataset.name;
+      }
+
+      updates.target = {
+        ...dataset.target,
+        sheetId: selectedSheetId !== '__create_new__' ? selectedSheetId : '',
+        sheetName: sheetName,
+        anchorA1: anchorCell ? anchorCell.toUpperCase() : 'A1',
+        allowResize: allowResize !== false,
+        namedRange: namedRange
+      };
+
       const button = event.target;
       button.disabled = true;
       button.innerHTML = 'Saving... <span class="loading"></span>';

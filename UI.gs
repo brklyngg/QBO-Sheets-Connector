@@ -459,6 +459,68 @@ function performMaintenance() {
 }
 
 /**
+ * Gets persisted add-on settings
+ */
+function getAddonSettings() {
+  try {
+    const props = PropertiesService.getUserProperties();
+    return {
+      success: true,
+      useSandbox: props.getProperty('QBO_USE_SANDBOX') === 'true',
+      enableNotifications: props.getProperty('SCHEDULE_ERROR_NOTIFICATIONS') === 'true'
+    };
+  } catch (error) {
+    console.error('Error getting add-on settings:', error);
+    return {
+      success: false,
+      error: error.toString(),
+      useSandbox: false,
+      enableNotifications: false
+    };
+  }
+}
+
+/**
+ * Saves add-on settings
+ */
+function saveAddonSettings(settings) {
+  try {
+    if (!settings || typeof settings !== 'object') {
+      throw new Error('Invalid settings payload');
+    }
+
+    const props = PropertiesService.getUserProperties();
+
+    if (settings.useSandbox !== undefined) {
+      props.setProperty('QBO_USE_SANDBOX', settings.useSandbox ? 'true' : 'false');
+    }
+
+    if (settings.enableNotifications !== undefined) {
+      props.setProperty('SCHEDULE_ERROR_NOTIFICATIONS', settings.enableNotifications ? 'true' : 'false');
+    }
+
+    logAction('save_addon_settings', {
+      useSandbox: settings.useSandbox === true,
+      enableNotifications: settings.enableNotifications === true
+    });
+
+    return {
+      success: true
+    };
+  } catch (error) {
+    console.error('Error saving add-on settings:', error);
+    logAction('save_addon_settings_error', {
+      error: error.toString()
+    });
+
+    return {
+      success: false,
+      error: error.toString()
+    };
+  }
+}
+
+/**
  * Gets help content for a specific topic
  */
 function getHelpContent(topic) {

@@ -3,9 +3,6 @@
  * Uses the OAuth2 library for Google Apps Script
  */
 
-// OAuth constants
-const OAUTH_CLIENT_ID = PropertiesService.getUserProperties().getProperty('QBO_CLIENT_ID') || '';
-const OAUTH_CLIENT_SECRET = PropertiesService.getUserProperties().getProperty('QBO_CLIENT_SECRET') || '';
 const OAUTH_CALLBACK_FUNCTION = 'authCallback';
 const OAUTH_SCOPE = 'com.intuit.quickbooks.accounting';
 
@@ -16,24 +13,60 @@ const INTUIT_REVOKE_URL = 'https://developer.api.intuit.com/v2/oauth2/tokens/rev
 const INTUIT_DISCOVERY_URL = 'https://developer.api.intuit.com/.well-known/openid_configuration';
 
 /**
+ * Returns the stored OAuth credentials.
+ */
+function getStoredOAuthCredentials() {
+  const properties = PropertiesService.getUserProperties();
+  return {
+    clientId: properties.getProperty('QBO_CLIENT_ID') || '',
+    clientSecret: properties.getProperty('QBO_CLIENT_SECRET') || ''
+  };
+}
+
+/**
+ * Ensures OAuth credentials exist and returns them.
+ */
+function requireOAuthCredentials() {
+  const creds = getStoredOAuthCredentials();
+  if (!creds.clientId || !creds.clientSecret) {
+    const error = new Error('OAuth credentials not configured. Please set up your QuickBooks app credentials in Settings.');
+    error.name = 'MissingCredentialsError';
+    throw error;
+  }
+  return creds;
+}
+
+/**
+ * Builds token request headers with the latest credentials.
+ */
+function buildTokenHeaders(clientId, clientSecret) {
+  const headers = {
+    'Accept': 'application/json',
+    'Content-Type': 'application/x-www-form-urlencoded'
+  };
+  if (clientId && clientSecret) {
+    headers['Authorization'] = 'Basic ' + Utilities.base64Encode(clientId + ':' + clientSecret);
+  }
+  return headers;
+}
+
+/**
  * Gets the OAuth2 service instance
  */
 function getOAuthService() {
+  const { clientId, clientSecret } = getStoredOAuthCredentials();
+
   return OAuth2.createService('QuickBooksOnline')
     .setAuthorizationBaseUrl(INTUIT_AUTH_URL)
     .setTokenUrl(INTUIT_TOKEN_URL)
-    .setClientId(OAUTH_CLIENT_ID)
-    .setClientSecret(OAUTH_CLIENT_SECRET)
+    .setClientId(clientId || '')
+    .setClientSecret(clientSecret || '')
     .setCallbackFunction(OAUTH_CALLBACK_FUNCTION)
     .setPropertyStore(PropertiesService.getUserProperties())
     .setScope(OAUTH_SCOPE)
     .setParam('access_type', 'offline')
     .setParam('prompt', 'consent')
-    .setTokenHeaders({
-      'Authorization': 'Basic ' + Utilities.base64Encode(OAUTH_CLIENT_ID + ':' + OAUTH_CLIENT_SECRET),
-      'Accept': 'application/json',
-      'Content-Type': 'application/x-www-form-urlencoded'
-    });
+    .setTokenHeaders(buildTokenHeaders(clientId, clientSecret));
 }
 
 /**
@@ -75,20 +108,20 @@ function authCallback(request) {
  */
 function getAuthorizationUrl() {
   try {
+    const creds = requireOAuthCredentials();
     const service = getOAuthService();
-    
-    if (!OAUTH_CLIENT_ID || !OAUTH_CLIENT_SECRET) {
-      throw new Error('OAuth credentials not configured. Please set up your QuickBooks app credentials in Settings.');
-    }
     
     const authUrl = service.getAuthorizationUrl();
     
     logAction('get_auth_url', { 
-      hasCredentials: !!(OAUTH_CLIENT_ID && OAUTH_CLIENT_SECRET)
+      hasCredentials: !!(creds.clientId && creds.clientSecret)
     });
     
     return authUrl;
   } catch (error) {
+    logAction('get_auth_url_error', {
+      error: error.toString()
+    });
     console.error('Error getting auth URL:', error);
     throw error;
   }
@@ -154,6 +187,7 @@ function disconnect() {
   try {
     const service = getOAuthService();
     const token = service.getAccessToken();
+    const { clientId, clientSecret } = getStoredOAuthCredentials();
     
     if (token) {
       // Revoke the token at Intuit
@@ -162,7 +196,9 @@ function disconnect() {
         const response = UrlFetchApp.fetch(revokeUrl, {
           method: 'POST',
           headers: {
-            'Authorization': 'Basic ' + Utilities.base64Encode(OAUTH_CLIENT_ID + ':' + OAUTH_CLIENT_SECRET),
+            ...(clientId && clientSecret ? {
+              'Authorization': 'Basic ' + Utilities.base64Encode(clientId + ':' + clientSecret)
+            } : {}),
             'Accept': 'application/json',
             'Content-Type': 'application/x-www-form-urlencoded'
           },
@@ -206,6 +242,7 @@ function disconnect() {
  */
 function refreshAccessToken() {
   try {
+    requireOAuthCredentials();
     const service = getOAuthService();
     
     if (service.hasAccess()) {
@@ -238,6 +275,7 @@ function refreshAccessToken() {
  */
 function makeAuthenticatedRequest(url, options = {}) {
   try {
+    requireOAuthCredentials();
     const service = getOAuthService();
     
     if (!service.hasAccess()) {

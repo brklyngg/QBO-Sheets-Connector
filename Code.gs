@@ -56,11 +56,12 @@ function onOpen(e) {
 /**
  * Shows the main sidebar UI
  */
-function showSidebar() {
+function showSidebar(initialTab) {
   try {
     const template = HtmlService.createTemplateFromFile('UI');
     template.isConnected = isConnected();
     template.userEmail = Session.getActiveUser().getEmail();
+    template.initialTab = initialTab || 'datasets';
     
     const html = template.evaluate()
       .setTitle(ADDON_TITLE)
@@ -69,7 +70,8 @@ function showSidebar() {
     SpreadsheetApp.getUi().showSidebar(html);
     
     logAction('show_sidebar', {
-      isConnected: template.isConnected
+      isConnected: template.isConnected,
+      initialTab: template.initialTab
     });
   } catch (error) {
     showError('Failed to open sidebar', error);
@@ -144,17 +146,8 @@ function refreshAllDatasets() {
  * Shows settings dialog
  */
 function showSettings() {
-  try {
-    const html = HtmlService.createHtmlOutputFromFile('Settings')
-      .setWidth(400)
-      .setHeight(300);
-      
-    SpreadsheetApp.getUi().showModalDialog(html, 'Settings');
-    
-    logAction('show_settings');
-  } catch (error) {
-    showError('Failed to show settings', error);
-  }
+  showSidebar('settings');
+  logAction('show_settings');
 }
 
 /**

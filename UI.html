@@ -400,14 +400,14 @@
     
     <!-- Tabs -->
     <div class="tabs">
-      <button class="tab active" onclick="switchTab('datasets')">Datasets</button>
-      <button class="tab" onclick="switchTab('schedules')">Schedules</button>
-      <button class="tab" onclick="switchTab('logs')">Logs</button>
-      <button class="tab" onclick="switchTab('settings')">Settings</button>
+      <button class="tab" data-tab="datasets" onclick="switchTab('datasets', this)">Datasets</button>
+      <button class="tab" data-tab="schedules" onclick="switchTab('schedules', this)">Schedules</button>
+      <button class="tab" data-tab="logs" onclick="switchTab('logs', this)">Logs</button>
+      <button class="tab" data-tab="settings" onclick="switchTab('settings', this)">Settings</button>
     </div>
     
     <!-- Datasets Tab -->
-    <div id="datasetsTab" class="tab-content active">
+    <div id="datasetsTab" class="tab-content">
       <!-- Datasets Section -->
       <div class="section">
         <div class="section-title">
@@ -602,10 +602,12 @@
   <script>
     // Global variables
     let isConnected = <?= isConnected ?>;
+    let initialTab = '<?= initialTab ?>';
     let currentDatasets = [];
     let selectedDatasetId = null;
     let currentJob = null;
     let jobPollInterval = null;
+    let settingsLoaded = false;
     
     // Initialize
     document.addEventListener('DOMContentLoaded', function() {
@@ -614,7 +616,10 @@
         loadDatasets();
         loadRecentLogs();
       }
+      attachSettingsListeners();
       loadSettings();
+      const defaultTab = (initialTab && typeof initialTab === 'string') ? initialTab : 'datasets';
+      switchTab(defaultTab);
     });
     
     // Connection management
@@ -1229,22 +1234,63 @@
     }
     
     // Settings tab
+    function attachSettingsListeners() {
+      ['useSandbox', 'enableNotifications'].forEach(id => {
+        const element = document.getElementById(id);
+        if (!element) return;
+        element.addEventListener('change', function() {
+          if (!settingsLoaded) return;
+          persistAddonSettings(true);
+        });
+      });
+    }
+
     function loadSettings() {
       google.script.run
         .withSuccessHandler(function(creds) {
           document.getElementById('clientId').value = creds.clientId || '';
           // Don't show client secret for security
         })
+        .withFailureHandler(showError)
         .getOAuthCredentials();
-        
-      // Load other settings
-      const useSandbox = localStorage.getItem('qbo_use_sandbox') === 'true';
-      const enableNotifications = localStorage.getItem('qbo_enable_notifications') === 'true';
-      
-      document.getElementById('useSandbox').checked = useSandbox;
-      document.getElementById('enableNotifications').checked = enableNotifications;
+
+      google.script.run
+        .withSuccessHandler(function(result) {
+          if (result && result.success) {
+            document.getElementById('useSandbox').checked = !!result.useSandbox;
+            document.getElementById('enableNotifications').checked = !!result.enableNotifications;
+          } else if (result && result.error) {
+            showError(result.error);
+          }
+          settingsLoaded = true;
+        })
+        .withFailureHandler(function(error) {
+          settingsLoaded = true;
+          showError(error);
+        })
+        .getAddonSettings();
     }
-    
+
+    function persistAddonSettings(showMessage = true) {
+      const payload = {
+        useSandbox: document.getElementById('useSandbox').checked,
+        enableNotifications: document.getElementById('enableNotifications').checked
+      };
+
+      google.script.run
+        .withSuccessHandler(function(result) {
+          if (result && result.success) {
+            if (showMessage) {
+              showSuccess('Add-on settings saved');
+            }
+          } else if (result && result.error) {
+            showError(result.error);
+          }
+        })
+        .withFailureHandler(showError)
+        .saveAddonSettings(payload);
+    }
+
     function saveOAuthSettings() {
       const clientId = document.getElementById('clientId').value.trim();
       const clientSecret = document.getElementById('clientSecret').value.trim();
@@ -1261,6 +1307,7 @@
       google.script.run
         .withSuccessHandler(function(result) {
           if (result.success) {
+            persistAddonSettings(false);
             showSuccess('OAuth settings saved successfully');
             document.getElementById('clientSecret').value = '';
             updateConnectionStatus();
@@ -1276,25 +1323,27 @@
           button.textContent = 'Save Settings';
         })
         .setOAuthCredentials(clientId, clientSecret);
-        
-      // Save other settings
-      localStorage.setItem('qbo_use_sandbox', document.getElementById('useSandbox').checked);
-      localStorage.setItem('qbo_enable_notifications', document.getElementById('enableNotifications').checked);
     }
-    
+
     // Tab switching
-    function switchTab(tabName) {
+    function switchTab(tabName, button) {
       // Update tab buttons
       document.querySelectorAll('.tab').forEach(tab => {
         tab.classList.remove('active');
       });
-      event.target.classList.add('active');
+      const activeButton = button || document.querySelector(`.tab[data-tab="${tabName}"]`);
+      if (activeButton) {
+        activeButton.classList.add('active');
+      }
       
       // Update tab content
       document.querySelectorAll('.tab-content').forEach(content => {
         content.classList.remove('active');
       });
-      document.getElementById(tabName + 'Tab').classList.add('active');
+      const tabContent = document.getElementById(tabName + 'Tab');
+      if (tabContent) {
+        tabContent.classList.add('active');
+      }
       
       // Load tab-specific data
       if (tabName === 'logs' && isConnected) {

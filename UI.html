@@ -68,6 +68,77 @@
       border-radius: 4px;
       background: white;
     }
+
+    .schedule-summary {
+      background: #f5f9ff;
+      border: 1px solid #cdd8f1;
+      border-radius: 4px;
+      padding: 12px;
+      margin-bottom: 12px;
+      font-size: 13px;
+      color: #1f3a63;
+    }
+
+    .schedule-summary strong {
+      font-weight: 600;
+    }
+
+    .schedule-warning {
+      color: #c62828;
+      font-weight: 600;
+      margin-top: 8px;
+    }
+
+    .schedule-item {
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      padding: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+      background: white;
+    }
+
+    .schedule-item--warning {
+      border-color: #f57c00;
+      background: #fff7e6;
+    }
+
+    .schedule-details {
+      flex: 1;
+      margin-right: 16px;
+    }
+
+    .schedule-meta {
+      color: #555;
+      font-size: 12px;
+      margin-top: 4px;
+    }
+
+    .schedule-status {
+      font-size: 12px;
+      margin-top: 6px;
+    }
+
+    .schedule-status.success {
+      color: #388e3c;
+    }
+
+    .schedule-status.warning {
+      color: #c62828;
+    }
+
+    .schedule-next {
+      font-size: 12px;
+      color: #666;
+      margin-top: 4px;
+    }
+
+    .schedule-actions {
+      display: flex;
+      align-items: center;
+    }
     
     .dataset-item {
       padding: 12px;
@@ -1355,25 +1426,72 @@
     
     // Schedules tab
     function updateSchedulesList() {
-      const scheduledDatasets = currentDatasets.filter(d => d.schedule && d.schedule.enabled);
       const listDiv = document.getElementById('schedulesList');
-      
-      if (scheduledDatasets.length === 0) {
-        listDiv.innerHTML = '<p style="color: #666;">No scheduled datasets</p>';
-        return;
-      }
-      
-      listDiv.innerHTML = scheduledDatasets.map(dataset => `
-        <div class="dataset-item">
-          <div class="dataset-info">
-            <div class="dataset-name">${dataset.name}</div>
-            <div class="dataset-type">
-              ${dataset.schedule.freq} ${dataset.schedule.freq !== 'hourly' ? 'at ' + dataset.schedule.timeOfDay : ''}
+      listDiv.innerHTML = '<p style="color: #666;">Loading schedule status...</p>';
+
+      google.script.run
+        .withSuccessHandler(function(status) {
+          if (!status || status.error) {
+            listDiv.innerHTML = '<p style="color: #c62828;">Unable to load schedule status.</p>';
+            if (status && status.error) {
+              console.error(status.error);
+            }
+            return;
+          }
+
+          const summaryHtml = `
+            <div class="schedule-summary">
+              <div><strong>${status.scheduledDatasets}</strong> of ${status.totalDatasets} datasets scheduled</div>
+              <div><strong>${status.activeTriggers}</strong> active triggers (${status.remainingTriggers} of ${status.maxTriggers} remaining)</div>
             </div>
-          </div>
-          <button class="action" onclick="testScheduledRun('${dataset.id}')">Test Run</button>
-        </div>
-      `).join('');
+          `;
+
+          const warnings = [];
+          if (status.orphanedSchedules > 0) {
+            warnings.push(`${status.orphanedSchedules} scheduled dataset${status.orphanedSchedules === 1 ? '' : 's'} missing triggers`);
+          }
+          if (status.limitExceeded) {
+            warnings.push('Time-driven trigger limit reached. Disable a schedule before adding new ones.');
+          } else if (status.limitWarning) {
+            warnings.push('Approaching time-driven trigger limit. Consider removing unused schedules.');
+          }
+
+          const warningHtml = warnings.length
+            ? warnings.map(w => `<div class="schedule-warning">⚠️ ${w}</div>`).join('')
+            : '';
+
+          let schedulesHtml = '';
+          if (!status.schedules.length) {
+            schedulesHtml = '<div class="empty-state"><div class="empty-state-icon">🕐</div><div>No schedules configured</div></div>';
+          } else {
+            schedulesHtml = status.schedules.map(schedule => {
+              const warningClass = schedule.triggerExists ? '' : 'schedule-item--warning';
+              const statusClass = schedule.triggerExists ? 'schedule-status success' : 'schedule-status warning';
+              const statusText = schedule.triggerExists ? 'Trigger active' : 'Trigger missing - auto-repair in progress';
+              const nextRunText = schedule.nextRun ? `<div class="schedule-next">Next: ${schedule.nextRun}</div>` : '';
+              return `
+                <div class="schedule-item ${warningClass}">
+                  <div class="schedule-details">
+                    <div class="dataset-name">${schedule.datasetName}</div>
+                    <div class="schedule-meta">${formatScheduleFrequency(schedule.frequency, schedule.timeOfDay, schedule.dayOfWeek, schedule.dayOfMonth)}</div>
+                    <div class="${statusClass}">${statusText}</div>
+                    ${nextRunText}
+                  </div>
+                  <div class="schedule-actions">
+                    <button class="action" onclick="testScheduledRun('${schedule.datasetId}'); event.stopPropagation();">Test Run</button>
+                  </div>
+                </div>
+              `;
+            }).join('');
+          }
+
+          listDiv.innerHTML = summaryHtml + warningHtml + schedulesHtml;
+        })
+        .withFailureHandler(function(error) {
+          showError(error);
+          listDiv.innerHTML = '<p style="color: #c62828;">Failed to load schedule status.</p>';
+        })
+        .getScheduleStatus();
     }
     
     function testScheduledRun(datasetId) {
@@ -1570,7 +1688,48 @@
       };
       return names[type] || type;
     }
-    
+
+    function formatScheduleFrequency(freq, timeOfDay, dayOfWeek, dayOfMonth) {
+      const normalized = (freq || '').toLowerCase();
+      const timeText = timeOfDay ? ` at ${timeOfDay}` : '';
+      switch (normalized) {
+        case 'hourly':
+          return 'Hourly';
+        case 'daily':
+          return `Daily${timeText}`.trim();
+        case 'weekly':
+          return `Weekly on ${formatWeekDayName(dayOfWeek)}${timeText}`.trim();
+        case 'monthly':
+          return `Monthly on day ${dayOfMonth || 1}${timeText}`.trim();
+        default:
+          return freq || 'Custom';
+      }
+    }
+
+    function formatWeekDayName(dayOfWeek) {
+      const map = {
+        'SUNDAY': 'Sunday',
+        'MONDAY': 'Monday',
+        'TUESDAY': 'Tuesday',
+        'WEDNESDAY': 'Wednesday',
+        'THURSDAY': 'Thursday',
+        'FRIDAY': 'Friday',
+        'SATURDAY': 'Saturday',
+        '0': 'Sunday',
+        '1': 'Monday',
+        '2': 'Tuesday',
+        '3': 'Wednesday',
+        '4': 'Thursday',
+        '5': 'Friday',
+        '6': 'Saturday'
+      };
+      if (!dayOfWeek) {
+        return 'Monday';
+      }
+      const key = dayOfWeek.toString().toUpperCase();
+      return map[key] || 'Monday';
+    }
+
     // Modal handling
     window.onclick = function(event) {
       if (event.target.classList.contains('modal')) {

@@ -432,11 +432,21 @@ function getUsageStats() {
  */
 function performMaintenance() {
   try {
+    const cleanupResult = cleanupOrphanedTriggers();
     const results = {
-      orphanedTriggers: cleanupOrphanedTriggers(),
+      orphanedTriggers: cleanupResult.removed || 0,
+      repairedSchedules: cleanupResult.repaired || 0,
       oldLogs: clearOldLogs(30),
-      logFlush: false
+      logFlush: false,
+      logTriggerEnsured: false
     };
+
+    try {
+      ensureLogFlushTrigger();
+      results.logTriggerEnsured = true;
+    } catch (triggerError) {
+      console.error('Error ensuring log flush trigger during maintenance:', triggerError);
+    }
     
     // Force flush any pending logs
     try {

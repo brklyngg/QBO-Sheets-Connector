@@ -274,11 +274,17 @@ function getScheduleStatus() {
     const triggers = ScriptApp.getProjectTriggers();
     const userProperties = PropertiesService.getUserProperties();
     
+    const MAX_TIME_TRIGGERS = 20;
+    const clockTriggers = triggers.filter(t => t.getHandlerFunction() === TRIGGER_FUNCTION);
+    
     const status = {
       totalDatasets: datasets.length,
       scheduledDatasets: 0,
-      activeTriggers: triggers.filter(t => t.getHandlerFunction() === TRIGGER_FUNCTION).length,
-      schedules: []
+      activeTriggers: clockTriggers.length,
+      maxTriggers: MAX_TIME_TRIGGERS,
+      remainingTriggers: Math.max(0, MAX_TIME_TRIGGERS - clockTriggers.length),
+      schedules: [],
+      orphanedSchedules: 0
     };
     
     datasets.forEach(dataset => {
@@ -288,17 +294,27 @@ function getScheduleStatus() {
         const triggerId = userProperties.getProperty(TRIGGER_PREFIX + dataset.id);
         const trigger = triggers.find(t => t.getUniqueId() === triggerId);
         
+        const triggerExists = !!trigger;
         status.schedules.push({
           datasetId: dataset.id,
           datasetName: dataset.name,
           frequency: dataset.schedule.freq,
           timeOfDay: dataset.schedule.timeOfDay,
+          dayOfWeek: dataset.schedule.dayOfWeek || null,
+          dayOfMonth: dataset.schedule.dayOfMonth || null,
           triggerId: triggerId,
-          triggerExists: !!trigger,
+          triggerExists: triggerExists,
           nextRun: trigger ? getNextRunTime(trigger) : null
         });
+
+        if (!triggerExists) {
+          status.orphanedSchedules++;
+        }
       }
     });
+    
+    status.limitWarning = status.remainingTriggers <= 2;
+    status.limitExceeded = status.remainingTriggers === 0;
     
     return status;
   } catch (error) {
@@ -457,29 +473,78 @@ function cleanupOrphanedTriggers() {
   try {
     const triggers = ScriptApp.getProjectTriggers();
     const userProperties = PropertiesService.getUserProperties();
-    let cleaned = 0;
-    
+    const datasets = getDatasets();
+    const datasetMap = {};
+    const scheduledDatasets = [];
+    const triggerMap = {};
+    let removed = 0;
+    let repaired = 0;
+
     triggers.forEach(trigger => {
       if (trigger.getHandlerFunction() === TRIGGER_FUNCTION) {
-        const triggerId = trigger.getUniqueId();
-        const datasetId = userProperties.getProperty('trigger_' + triggerId);
-        
-        if (!datasetId || !getDatasetById(datasetId)) {
-          // Orphaned trigger - remove it
-          ScriptApp.deleteTrigger(trigger);
-          userProperties.deleteProperty('trigger_' + triggerId);
-          cleaned++;
+        triggerMap[trigger.getUniqueId()] = trigger;
+      }
+    });
+
+    datasets.forEach(dataset => {
+      datasetMap[dataset.id] = dataset;
+      const propertyKey = TRIGGER_PREFIX + dataset.id;
+      if (dataset.schedule && dataset.schedule.enabled) {
+        scheduledDatasets.push(dataset);
+      } else {
+        const existingTriggerId = userProperties.getProperty(propertyKey);
+        if (existingTriggerId) {
+          const existingTrigger = triggerMap[existingTriggerId];
+          if (existingTrigger) {
+            ScriptApp.deleteTrigger(existingTrigger);
+            delete triggerMap[existingTriggerId];
+            removed++;
+          }
+          userProperties.deleteProperty(propertyKey);
+          userProperties.deleteProperty('trigger_' + existingTriggerId);
         }
       }
     });
-    
-    logAction('cleanup_orphaned_triggers', {
-      cleaned: cleaned
+
+    Object.keys(triggerMap).forEach(triggerId => {
+      const trigger = triggerMap[triggerId];
+      const datasetId = userProperties.getProperty('trigger_' + triggerId);
+      const dataset = datasetId ? datasetMap[datasetId] : null;
+
+      if (!dataset || !dataset.schedule || !dataset.schedule.enabled) {
+        ScriptApp.deleteTrigger(trigger);
+        userProperties.deleteProperty('trigger_' + triggerId);
+        if (datasetId) {
+          userProperties.deleteProperty(TRIGGER_PREFIX + datasetId);
+        }
+        delete triggerMap[triggerId];
+        removed++;
+      }
     });
-    
-    return cleaned;
+
+    scheduledDatasets.forEach(dataset => {
+      const propertyKey = TRIGGER_PREFIX + dataset.id;
+      const storedTriggerId = userProperties.getProperty(propertyKey);
+      const triggerExists = storedTriggerId && triggerMap[storedTriggerId];
+
+      if (!triggerExists) {
+        const newTriggerId = createScheduleTrigger(dataset.id, dataset.schedule);
+        if (newTriggerId) {
+          repaired++;
+          triggerMap[newTriggerId] = null;
+        }
+      }
+    });
+
+    logAction('cleanup_orphaned_triggers', {
+      removed: removed,
+      repaired: repaired
+    });
+
+    return { removed: removed, repaired: repaired };
   } catch (error) {
     console.error('Error cleaning up orphaned triggers:', error);
-    return 0;
+    logAction('cleanup_orphaned_triggers_error', { error: error.toString() });
+    return { removed: 0, repaired: 0, error: error.toString() };
   }
 }

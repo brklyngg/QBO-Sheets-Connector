@@ -24,6 +24,10 @@ function onInstall(e) {
   
   // Initialize logs sheet
   initializeLogsSheet();
+
+  // Ensure background maintenance is configured
+  ensureLogFlushTrigger();
+  cleanupOrphanedTriggers();
 }
 
 /**
@@ -43,6 +47,9 @@ function onOpen(e) {
       .addItem('About', 'showAbout')
       .addToUi();
       
+    ensureLogFlushTrigger();
+    cleanupOrphanedTriggers();
+
     // Log add-on open
     logAction('addon_open', {
       authMode: e ? e.authMode : 'UNKNOWN',

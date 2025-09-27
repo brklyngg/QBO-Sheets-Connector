@@ -455,6 +455,20 @@ function setupLogFlushTrigger() {
   }
 }
 
+function ensureLogFlushTrigger() {
+  try {
+    const triggers = ScriptApp.getProjectTriggers();
+    const hasTrigger = triggers.some(trigger => trigger.getHandlerFunction() === 'flushLogQueue');
+    if (!hasTrigger) {
+      setupLogFlushTrigger();
+      logAction('log_flush_trigger_created', { reason: 'ensure' });
+    }
+  } catch (error) {
+    console.error('Error ensuring log flush trigger:', error);
+    logAction('log_flush_trigger_error', { error: error.toString() });
+  }
+}
+
 /**
  * Gets a formatted error message for display
  */

@@ -1,0 +1,1336 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <link rel="stylesheet" href="https://ssl.gstatic.com/docs/script/css/add-ons1.css">
+  <style>
+    body {
+      padding: 0;
+      margin: 0;
+      font-size: 14px;
+    }
+    
+    .container {
+      padding: 16px;
+    }
+    
+    .section {
+      margin-bottom: 20px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      padding: 16px;
+      background: #f9f9f9;
+    }
+    
+    .section-title {
+      font-weight: bold;
+      margin-bottom: 12px;
+      color: #333;
+      font-size: 16px;
+    }
+    
+    .connection-status {
+      padding: 12px;
+      border-radius: 4px;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    
+    .connected {
+      background: #e8f5e9;
+      color: #2e7d32;
+      border: 1px solid #81c784;
+    }
+    
+    .disconnected {
+      background: #ffebee;
+      color: #c62828;
+      border: 1px solid #ef5350;
+    }
+    
+    .status-icon {
+      font-size: 20px;
+      margin-right: 8px;
+    }
+    
+    .company-info {
+      font-size: 12px;
+      color: #666;
+      margin-top: 4px;
+    }
+    
+    .dataset-list {
+      max-height: 200px;
+      overflow-y: auto;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      background: white;
+    }
+    
+    .dataset-item {
+      padding: 12px;
+      border-bottom: 1px solid #eee;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .dataset-item:hover {
+      background: #f5f5f5;
+    }
+    
+    .dataset-item.selected {
+      background: #e3f2fd;
+      border-left: 3px solid #2196f3;
+    }
+    
+    .dataset-info {
+      flex: 1;
+    }
+    
+    .dataset-name {
+      font-weight: 500;
+      margin-bottom: 2px;
+    }
+    
+    .dataset-type {
+      font-size: 12px;
+      color: #666;
+    }
+    
+    .dataset-actions {
+      display: flex;
+      gap: 8px;
+    }
+    
+    .icon-button {
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 4px;
+      color: #666;
+      font-size: 16px;
+    }
+    
+    .icon-button:hover {
+      color: #333;
+    }
+    
+    .form-group {
+      margin-bottom: 16px;
+    }
+    
+    .form-label {
+      display: block;
+      margin-bottom: 4px;
+      font-weight: 500;
+      color: #333;
+    }
+    
+    .form-input {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 14px;
+    }
+    
+    .form-select {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 14px;
+      background: white;
+    }
+    
+    .form-textarea {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 14px;
+      font-family: monospace;
+      min-height: 80px;
+      resize: vertical;
+    }
+    
+    .button-group {
+      display: flex;
+      gap: 8px;
+      margin-top: 16px;
+    }
+    
+    .job-status {
+      padding: 16px;
+      background: #f5f5f5;
+      border-radius: 4px;
+      margin-top: 12px;
+    }
+    
+    .job-progress {
+      margin: 12px 0;
+    }
+    
+    .progress-bar {
+      height: 20px;
+      background: #e0e0e0;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    
+    .progress-fill {
+      height: 100%;
+      background: #4285f4;
+      transition: width 0.3s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 12px;
+    }
+    
+    .job-message {
+      font-size: 13px;
+      color: #666;
+      margin-top: 8px;
+    }
+    
+    .error-message {
+      color: #d32f2f;
+      font-size: 13px;
+      margin-top: 8px;
+      padding: 8px;
+      background: #ffebee;
+      border-radius: 4px;
+    }
+    
+    .success-message {
+      color: #388e3c;
+      font-size: 13px;
+      margin-top: 8px;
+      padding: 8px;
+      background: #e8f5e9;
+      border-radius: 4px;
+    }
+    
+    .loading {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      border: 2px solid #f3f3f3;
+      border-top: 2px solid #4285f4;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-left: 8px;
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    
+    .tabs {
+      display: flex;
+      border-bottom: 2px solid #e0e0e0;
+      margin-bottom: 16px;
+    }
+    
+    .tab {
+      padding: 8px 16px;
+      cursor: pointer;
+      border: none;
+      background: none;
+      font-size: 14px;
+      color: #666;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -2px;
+    }
+    
+    .tab:hover {
+      color: #333;
+    }
+    
+    .tab.active {
+      color: #4285f4;
+      border-bottom-color: #4285f4;
+      font-weight: 500;
+    }
+    
+    .tab-content {
+      display: none;
+    }
+    
+    .tab-content.active {
+      display: block;
+    }
+    
+    .schedule-config {
+      border: 1px solid #ddd;
+      padding: 12px;
+      border-radius: 4px;
+      background: #fafafa;
+    }
+    
+    .checkbox-group {
+      display: flex;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+    
+    .checkbox-group input[type="checkbox"] {
+      margin-right: 8px;
+    }
+    
+    .help-text {
+      font-size: 12px;
+      color: #666;
+      margin-top: 4px;
+    }
+    
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0,0,0,0.4);
+    }
+    
+    .modal-content {
+      background-color: #fefefe;
+      margin: 15% auto;
+      padding: 20px;
+      border: 1px solid #888;
+      width: 80%;
+      max-width: 500px;
+      border-radius: 8px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+    
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid #e0e0e0;
+    }
+    
+    .modal-title {
+      font-size: 18px;
+      font-weight: 500;
+      margin: 0;
+    }
+    
+    .close {
+      color: #aaa;
+      font-size: 28px;
+      font-weight: bold;
+      cursor: pointer;
+      line-height: 20px;
+    }
+    
+    .close:hover,
+    .close:focus {
+      color: black;
+    }
+    
+    .empty-state {
+      text-align: center;
+      padding: 40px 20px;
+      color: #666;
+    }
+    
+    .empty-state-icon {
+      font-size: 48px;
+      color: #ddd;
+      margin-bottom: 16px;
+    }
+    
+    .tooltip {
+      position: relative;
+      display: inline-block;
+      cursor: help;
+      color: #666;
+      margin-left: 4px;
+    }
+    
+    .tooltip .tooltiptext {
+      visibility: hidden;
+      width: 200px;
+      background-color: #333;
+      color: #fff;
+      text-align: left;
+      border-radius: 4px;
+      padding: 8px;
+      position: absolute;
+      z-index: 1;
+      bottom: 125%;
+      left: 50%;
+      margin-left: -100px;
+      font-size: 12px;
+      line-height: 1.4;
+    }
+    
+    .tooltip:hover .tooltiptext {
+      visibility: visible;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Connection Status Section -->
+    <div class="section">
+      <div class="section-title">Connection Status</div>
+      <div id="connectionStatus" class="connection-status disconnected">
+        <div>
+          <span class="status-icon">⚠️</span>
+          <span id="statusText">Not Connected</span>
+          <div id="companyInfo" class="company-info" style="display: none;"></div>
+        </div>
+        <button id="connectBtn" class="action">Connect</button>
+      </div>
+    </div>
+    
+    <!-- Tabs -->
+    <div class="tabs">
+      <button class="tab active" onclick="switchTab('datasets')">Datasets</button>
+      <button class="tab" onclick="switchTab('schedules')">Schedules</button>
+      <button class="tab" onclick="switchTab('logs')">Logs</button>
+      <button class="tab" onclick="switchTab('settings')">Settings</button>
+    </div>
+    
+    <!-- Datasets Tab -->
+    <div id="datasetsTab" class="tab-content active">
+      <!-- Datasets Section -->
+      <div class="section">
+        <div class="section-title">
+          Datasets
+          <button class="action" style="float: right;" onclick="showCreateDatasetModal()">+ New Dataset</button>
+        </div>
+        
+        <div id="datasetList" class="dataset-list">
+          <div class="empty-state">
+            <div class="empty-state-icon">📊</div>
+            <div>No datasets configured</div>
+            <div style="font-size: 12px; margin-top: 8px;">Create a dataset to start importing data from QuickBooks</div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Run Section -->
+      <div class="section">
+        <div class="section-title">Run Dataset</div>
+        <div id="runSection">
+          <p style="color: #666; text-align: center;">Select a dataset above to run</p>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Schedules Tab -->
+    <div id="schedulesTab" class="tab-content">
+      <div class="section">
+        <div class="section-title">Scheduled Datasets</div>
+        <div id="schedulesList"></div>
+      </div>
+    </div>
+    
+    <!-- Logs Tab -->
+    <div id="logsTab" class="tab-content">
+      <div class="section">
+        <div class="section-title">
+          Recent Logs
+          <button class="action" style="float: right;" onclick="viewFullLogs()">View All</button>
+        </div>
+        <div id="recentLogs" style="max-height: 400px; overflow-y: auto;"></div>
+      </div>
+    </div>
+    
+    <!-- Settings Tab -->
+    <div id="settingsTab" class="tab-content">
+      <div class="section">
+        <div class="section-title">OAuth Configuration</div>
+        <div class="form-group">
+          <label class="form-label">
+            Client ID
+            <span class="tooltip">ℹ️
+              <span class="tooltiptext">Get this from your QuickBooks app at developer.intuit.com</span>
+            </span>
+          </label>
+          <input type="text" id="clientId" class="form-input" placeholder="Enter QuickBooks Client ID">
+        </div>
+        <div class="form-group">
+          <label class="form-label">
+            Client Secret
+            <span class="tooltip">ℹ️
+              <span class="tooltiptext">Keep this secret! Get it from your QuickBooks app settings</span>
+            </span>
+          </label>
+          <input type="password" id="clientSecret" class="form-input" placeholder="Enter QuickBooks Client Secret">
+        </div>
+        <button class="action" onclick="saveOAuthSettings()">Save Settings</button>
+      </div>
+      
+      <div class="section">
+        <div class="section-title">Advanced Settings</div>
+        <div class="checkbox-group">
+          <input type="checkbox" id="useSandbox">
+          <label for="useSandbox">Use QuickBooks Sandbox Environment</label>
+        </div>
+        <div class="checkbox-group">
+          <input type="checkbox" id="enableNotifications">
+          <label for="enableNotifications">Email notifications for schedule errors</label>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Create Dataset Modal -->
+  <div id="createDatasetModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 class="modal-title">Create New Dataset</h3>
+        <span class="close" onclick="closeModal('createDatasetModal')">&times;</span>
+      </div>
+      
+      <div class="form-group">
+        <label class="form-label">Dataset Name</label>
+        <input type="text" id="datasetName" class="form-input" placeholder="e.g., Monthly P&L Report">
+      </div>
+      
+      <div class="form-group">
+        <label class="form-label">Type</label>
+        <select id="datasetType" class="form-select" onchange="onDatasetTypeChange()">
+          <option value="">Select type...</option>
+          <option value="standard">Standard Report</option>
+          <option value="query">Custom Query</option>
+        </select>
+      </div>
+      
+      <div id="standardReportConfig" style="display: none;">
+        <div class="form-group">
+          <label class="form-label">Report Type</label>
+          <select id="reportType" class="form-select">
+            <option value="">Select report...</option>
+            <option value="profitAndLoss">Profit and Loss</option>
+            <option value="balanceSheet">Balance Sheet</option>
+            <option value="trialBalance">Trial Balance</option>
+            <option value="transactionListByDate">Transaction List by Date</option>
+            <option value="salesByCustomer">Sales by Customer</option>
+          </select>
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">Date Range</label>
+          <select id="dateRange" class="form-select" onchange="onDateRangeChange()">
+            <option value="ThisMonth">This Month</option>
+            <option value="LastMonth">Last Month</option>
+            <option value="ThisQuarter">This Quarter</option>
+            <option value="LastQuarter">Last Quarter</option>
+            <option value="ThisYear">This Year</option>
+            <option value="LastYear">Last Year</option>
+            <option value="custom">Custom Range</option>
+          </select>
+        </div>
+        
+        <div id="customDateRange" style="display: none;">
+          <div class="form-group">
+            <label class="form-label">Start Date</label>
+            <input type="date" id="startDate" class="form-input">
+          </div>
+          <div class="form-group">
+            <label class="form-label">End Date</label>
+            <input type="date" id="endDate" class="form-input">
+          </div>
+        </div>
+      </div>
+      
+      <div id="queryConfig" style="display: none;">
+        <div class="form-group">
+          <label class="form-label">
+            Query
+            <span class="tooltip">ℹ️
+              <span class="tooltiptext">Example: SELECT * FROM Customer WHERE Active = true ORDERBY DisplayName</span>
+            </span>
+          </label>
+          <textarea id="queryText" class="form-textarea" placeholder="SELECT * FROM Entity WHERE ..."></textarea>
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">Max Results</label>
+          <input type="number" id="maxResults" class="form-input" value="1000" min="1" max="1000">
+        </div>
+      </div>
+      
+      <div class="form-group">
+        <label class="form-label">Target Sheet</label>
+        <input type="text" id="targetSheet" class="form-input" placeholder="Sheet name (optional - uses dataset name if empty)">
+      </div>
+      
+      <div class="button-group">
+        <button class="action" onclick="createDataset()">Create Dataset</button>
+        <button onclick="closeModal('createDatasetModal')">Cancel</button>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Edit Dataset Modal -->
+  <div id="editDatasetModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 class="modal-title">Edit Dataset</h3>
+        <span class="close" onclick="closeModal('editDatasetModal')">&times;</span>
+      </div>
+      
+      <div id="editDatasetForm">
+        <!-- Form will be populated dynamically -->
+      </div>
+      
+      <div class="button-group">
+        <button class="action" onclick="updateDataset()">Save Changes</button>
+        <button onclick="closeModal('editDatasetModal')">Cancel</button>
+      </div>
+    </div>
+  </div>
+  
+  <script>
+    // Global variables
+    let isConnected = <?= isConnected ?>;
+    let currentDatasets = [];
+    let selectedDatasetId = null;
+    let currentJob = null;
+    let jobPollInterval = null;
+    
+    // Initialize
+    document.addEventListener('DOMContentLoaded', function() {
+      updateConnectionStatus();
+      if (isConnected) {
+        loadDatasets();
+        loadRecentLogs();
+      }
+      loadSettings();
+    });
+    
+    // Connection management
+    function updateConnectionStatus() {
+      google.script.run
+        .withSuccessHandler(function(details) {
+          const statusDiv = document.getElementById('connectionStatus');
+          const statusText = document.getElementById('statusText');
+          const connectBtn = document.getElementById('connectBtn');
+          const companyInfo = document.getElementById('companyInfo');
+          
+          if (details.connected) {
+            isConnected = true;
+            statusDiv.className = 'connection-status connected';
+            statusText.textContent = 'Connected to QuickBooks';
+            connectBtn.textContent = 'Disconnect';
+            connectBtn.onclick = disconnect;
+            
+            if (details.companyName) {
+              companyInfo.textContent = details.companyName;
+              companyInfo.style.display = 'block';
+            }
+            
+            // Load data
+            loadDatasets();
+            loadRecentLogs();
+          } else {
+            isConnected = false;
+            statusDiv.className = 'connection-status disconnected';
+            statusText.textContent = 'Not Connected';
+            connectBtn.textContent = 'Connect';
+            connectBtn.onclick = connect;
+            companyInfo.style.display = 'none';
+          }
+        })
+        .withFailureHandler(showError)
+        .getConnectionDetails();
+    }
+    
+    function connect() {
+      const button = event.target;
+      button.disabled = true;
+      button.innerHTML = 'Connecting... <span class="loading"></span>';
+      
+      google.script.run
+        .withSuccessHandler(function(authUrl) {
+          window.open(authUrl, '_blank', 'width=500,height=600');
+          
+          // Poll for connection status
+          const pollInterval = setInterval(function() {
+            google.script.run
+              .withSuccessHandler(function(connected) {
+                if (connected) {
+                  clearInterval(pollInterval);
+                  updateConnectionStatus();
+                }
+              })
+              .isConnected();
+          }, 2000);
+          
+          // Stop polling after 2 minutes
+          setTimeout(() => clearInterval(pollInterval), 120000);
+          
+          button.disabled = false;
+          button.textContent = 'Connect';
+        })
+        .withFailureHandler(function(error) {
+          showError(error);
+          button.disabled = false;
+          button.textContent = 'Connect';
+        })
+        .getAuthorizationUrl();
+    }
+    
+    function disconnect() {
+      if (!confirm('Are you sure you want to disconnect from QuickBooks?')) {
+        return;
+      }
+      
+      const button = event.target;
+      button.disabled = true;
+      button.innerHTML = 'Disconnecting... <span class="loading"></span>';
+      
+      google.script.run
+        .withSuccessHandler(function(result) {
+          if (result.success) {
+            updateConnectionStatus();
+            currentDatasets = [];
+            updateDatasetList();
+            showSuccess('Disconnected from QuickBooks');
+          } else {
+            showError(result.error);
+          }
+          button.disabled = false;
+          button.textContent = 'Disconnect';
+        })
+        .withFailureHandler(function(error) {
+          showError(error);
+          button.disabled = false;
+          button.textContent = 'Disconnect';
+        })
+        .disconnect();
+    }
+    
+    // Dataset management
+    function loadDatasets() {
+      google.script.run
+        .withSuccessHandler(function(datasets) {
+          currentDatasets = datasets;
+          updateDatasetList();
+          updateSchedulesList();
+        })
+        .withFailureHandler(showError)
+        .getDatasets();
+    }
+    
+    function updateDatasetList() {
+      const listDiv = document.getElementById('datasetList');
+      
+      if (currentDatasets.length === 0) {
+        listDiv.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-state-icon">📊</div>
+            <div>No datasets configured</div>
+            <div style="font-size: 12px; margin-top: 8px;">Create a dataset to start importing data from QuickBooks</div>
+          </div>
+        `;
+        return;
+      }
+      
+      listDiv.innerHTML = currentDatasets.map(dataset => `
+        <div class="dataset-item ${dataset.id === selectedDatasetId ? 'selected' : ''}" 
+             onclick="selectDataset('${dataset.id}')">
+          <div class="dataset-info">
+            <div class="dataset-name">${dataset.name}</div>
+            <div class="dataset-type">
+              ${dataset.type === 'standard' ? '📊 ' + formatReportType(dataset.params.reportType) : '🔍 Query: ' + dataset.params.query.substring(0, 50) + '...'}
+            </div>
+          </div>
+          <div class="dataset-actions">
+            ${dataset.schedule && dataset.schedule.enabled ? '<span title="Scheduled">🕐</span>' : ''}
+            <button class="icon-button" onclick="editDataset('${dataset.id}'); event.stopPropagation();" title="Edit">✏️</button>
+            <button class="icon-button" onclick="deleteDataset('${dataset.id}'); event.stopPropagation();" title="Delete">🗑️</button>
+          </div>
+        </div>
+      `).join('');
+    }
+    
+    function selectDataset(datasetId) {
+      selectedDatasetId = datasetId;
+      updateDatasetList();
+      
+      const dataset = currentDatasets.find(d => d.id === datasetId);
+      if (dataset) {
+        updateRunSection(dataset);
+      }
+    }
+    
+    function updateRunSection(dataset) {
+      const runSection = document.getElementById('runSection');
+      
+      runSection.innerHTML = `
+        <div class="form-group">
+          <strong>${dataset.name}</strong>
+          ${dataset.lastWrite ? `
+            <div class="help-text">
+              Last run: ${new Date(dataset.lastWrite.wroteAt).toLocaleString()}<br>
+              Rows: ${dataset.lastWrite.rows}, Columns: ${dataset.lastWrite.cols}
+            </div>
+          ` : '<div class="help-text">Never run</div>'}
+        </div>
+        
+        <div class="schedule-config">
+          <div class="checkbox-group">
+            <input type="checkbox" id="enableSchedule" ${dataset.schedule && dataset.schedule.enabled ? 'checked' : ''}>
+            <label for="enableSchedule">Enable scheduled refresh</label>
+          </div>
+          
+          <div id="scheduleOptions" style="${dataset.schedule && dataset.schedule.enabled ? '' : 'display: none;'}">
+            <div class="form-group">
+              <label class="form-label">Frequency</label>
+              <select id="scheduleFreq" class="form-select">
+                <option value="hourly" ${dataset.schedule && dataset.schedule.freq === 'hourly' ? 'selected' : ''}>Hourly</option>
+                <option value="daily" ${dataset.schedule && dataset.schedule.freq === 'daily' ? 'selected' : ''}>Daily</option>
+                <option value="weekly" ${dataset.schedule && dataset.schedule.freq === 'weekly' ? 'selected' : ''}>Weekly</option>
+                <option value="monthly" ${dataset.schedule && dataset.schedule.freq === 'monthly' ? 'selected' : ''}>Monthly</option>
+              </select>
+            </div>
+            
+            <div class="form-group" id="timeOfDayGroup" style="${dataset.schedule && dataset.schedule.freq !== 'hourly' ? '' : 'display: none;'}">
+              <label class="form-label">Time</label>
+              <input type="time" id="scheduleTime" class="form-input" value="${dataset.schedule ? dataset.schedule.timeOfDay : '09:00'}">
+            </div>
+          </div>
+          
+          <button class="action" onclick="updateSchedule('${dataset.id}')">Update Schedule</button>
+        </div>
+        
+        <div class="button-group">
+          <button class="action" onclick="runDataset('${dataset.id}')">Run Now</button>
+        </div>
+        
+        <div id="jobStatus" style="display: none;"></div>
+      `;
+      
+      // Add event listeners
+      document.getElementById('enableSchedule').addEventListener('change', function() {
+        document.getElementById('scheduleOptions').style.display = this.checked ? '' : 'none';
+      });
+      
+      document.getElementById('scheduleFreq').addEventListener('change', function() {
+        document.getElementById('timeOfDayGroup').style.display = this.value === 'hourly' ? 'none' : '';
+      });
+    }
+    
+    function showCreateDatasetModal() {
+      document.getElementById('createDatasetModal').style.display = 'block';
+      document.getElementById('datasetName').focus();
+    }
+    
+    function closeModal(modalId) {
+      document.getElementById(modalId).style.display = 'none';
+      // Clear form
+      if (modalId === 'createDatasetModal') {
+        document.getElementById('datasetName').value = '';
+        document.getElementById('datasetType').value = '';
+        document.getElementById('standardReportConfig').style.display = 'none';
+        document.getElementById('queryConfig').style.display = 'none';
+      }
+    }
+    
+    function onDatasetTypeChange() {
+      const type = document.getElementById('datasetType').value;
+      document.getElementById('standardReportConfig').style.display = type === 'standard' ? '' : 'none';
+      document.getElementById('queryConfig').style.display = type === 'query' ? '' : 'none';
+    }
+    
+    function onDateRangeChange() {
+      const range = document.getElementById('dateRange').value;
+      document.getElementById('customDateRange').style.display = range === 'custom' ? '' : 'none';
+    }
+    
+    function createDataset() {
+      const name = document.getElementById('datasetName').value.trim();
+      const type = document.getElementById('datasetType').value;
+      
+      if (!name) {
+        showError('Please enter a dataset name');
+        return;
+      }
+      
+      if (!type) {
+        showError('Please select a dataset type');
+        return;
+      }
+      
+      let params = {};
+      let target = {
+        sheetName: document.getElementById('targetSheet').value.trim() || name,
+        anchorA1: 'A1',
+        allowResize: true
+      };
+      
+      if (type === 'standard') {
+        const reportType = document.getElementById('reportType').value;
+        if (!reportType) {
+          showError('Please select a report type');
+          return;
+        }
+        
+        params.reportType = reportType;
+        
+        const dateRange = document.getElementById('dateRange').value;
+        if (dateRange === 'custom') {
+          params.start_date = document.getElementById('startDate').value;
+          params.end_date = document.getElementById('endDate').value;
+          
+          if (!params.start_date || !params.end_date) {
+            showError('Please select start and end dates');
+            return;
+          }
+        } else {
+          params.date_macro = dateRange;
+        }
+      } else if (type === 'query') {
+        const query = document.getElementById('queryText').value.trim();
+        if (!query) {
+          showError('Please enter a query');
+          return;
+        }
+        
+        params.query = query;
+      }
+      
+      const dataset = {
+        name: name,
+        type: type,
+        params: params,
+        target: target,
+        pagination: {
+          startPosition: 1,
+          maxResults: parseInt(document.getElementById('maxResults')?.value || 1000)
+        }
+      };
+      
+      // Show loading
+      const button = event.target;
+      button.disabled = true;
+      button.innerHTML = 'Creating... <span class="loading"></span>';
+      
+      google.script.run
+        .withSuccessHandler(function(result) {
+          closeModal('createDatasetModal');
+          loadDatasets();
+          showSuccess('Dataset created successfully');
+          selectDataset(result.id);
+        })
+        .withFailureHandler(function(error) {
+          showError(error);
+          button.disabled = false;
+          button.textContent = 'Create Dataset';
+        })
+        .createDataset(dataset);
+    }
+    
+    function editDataset(datasetId) {
+      const dataset = currentDatasets.find(d => d.id === datasetId);
+      if (!dataset) return;
+      
+      // Populate edit form
+      const formDiv = document.getElementById('editDatasetForm');
+      formDiv.innerHTML = `
+        <input type="hidden" id="editDatasetId" value="${dataset.id}">
+        
+        <div class="form-group">
+          <label class="form-label">Dataset Name</label>
+          <input type="text" id="editDatasetName" class="form-input" value="${dataset.name}">
+        </div>
+        
+        ${dataset.type === 'standard' ? `
+          <div class="form-group">
+            <label class="form-label">Report Type</label>
+            <select id="editReportType" class="form-select">
+              <option value="profitAndLoss" ${dataset.params.reportType === 'profitAndLoss' ? 'selected' : ''}>Profit and Loss</option>
+              <option value="balanceSheet" ${dataset.params.reportType === 'balanceSheet' ? 'selected' : ''}>Balance Sheet</option>
+              <option value="trialBalance" ${dataset.params.reportType === 'trialBalance' ? 'selected' : ''}>Trial Balance</option>
+              <option value="transactionListByDate" ${dataset.params.reportType === 'transactionListByDate' ? 'selected' : ''}>Transaction List by Date</option>
+              <option value="salesByCustomer" ${dataset.params.reportType === 'salesByCustomer' ? 'selected' : ''}>Sales by Customer</option>
+            </select>
+          </div>
+        ` : `
+          <div class="form-group">
+            <label class="form-label">Query</label>
+            <textarea id="editQueryText" class="form-textarea">${dataset.params.query}</textarea>
+          </div>
+        `}
+      `;
+      
+      document.getElementById('editDatasetModal').style.display = 'block';
+    }
+    
+    function updateDataset() {
+      const datasetId = document.getElementById('editDatasetId').value;
+      const dataset = currentDatasets.find(d => d.id === datasetId);
+      if (!dataset) return;
+      
+      const updates = {
+        name: document.getElementById('editDatasetName').value.trim()
+      };
+      
+      if (dataset.type === 'standard') {
+        updates.params = {
+          ...dataset.params,
+          reportType: document.getElementById('editReportType').value
+        };
+      } else {
+        updates.params = {
+          ...dataset.params,
+          query: document.getElementById('editQueryText').value.trim()
+        };
+      }
+      
+      const button = event.target;
+      button.disabled = true;
+      button.innerHTML = 'Saving... <span class="loading"></span>';
+      
+      google.script.run
+        .withSuccessHandler(function(result) {
+          closeModal('editDatasetModal');
+          loadDatasets();
+          showSuccess('Dataset updated successfully');
+        })
+        .withFailureHandler(function(error) {
+          showError(error);
+          button.disabled = false;
+          button.textContent = 'Save Changes';
+        })
+        .updateDataset(datasetId, updates);
+    }
+    
+    function deleteDataset(datasetId) {
+      const dataset = currentDatasets.find(d => d.id === datasetId);
+      if (!dataset) return;
+      
+      if (!confirm(`Are you sure you want to delete "${dataset.name}"?`)) {
+        return;
+      }
+      
+      google.script.run
+        .withSuccessHandler(function() {
+          loadDatasets();
+          showSuccess('Dataset deleted successfully');
+          if (selectedDatasetId === datasetId) {
+            selectedDatasetId = null;
+            document.getElementById('runSection').innerHTML = '<p style="color: #666; text-align: center;">Select a dataset above to run</p>';
+          }
+        })
+        .withFailureHandler(showError)
+        .deleteDataset(datasetId);
+    }
+    
+    function runDataset(datasetId) {
+      const button = event.target;
+      button.disabled = true;
+      button.innerHTML = 'Starting... <span class="loading"></span>';
+      
+      google.script.run
+        .withSuccessHandler(function(job) {
+          currentJob = job;
+          button.style.display = 'none';
+          updateJobStatus();
+          startJobPolling();
+        })
+        .withFailureHandler(function(error) {
+          showError(error);
+          button.disabled = false;
+          button.textContent = 'Run Now';
+        })
+        .runDataset(datasetId);
+    }
+    
+    function updateJobStatus() {
+      if (!currentJob) return;
+      
+      const statusDiv = document.getElementById('jobStatus');
+      statusDiv.style.display = 'block';
+      
+      const progress = currentJob.progress || 0;
+      const statusClass = currentJob.status === 'failed' ? 'error-message' : 
+                         currentJob.status === 'completed' ? 'success-message' : '';
+      
+      statusDiv.innerHTML = `
+        <div class="job-status">
+          <div><strong>Status:</strong> ${currentJob.status}</div>
+          <div class="job-progress">
+            <div class="progress-bar">
+              <div class="progress-fill" style="width: ${progress}%">${progress}%</div>
+            </div>
+          </div>
+          <div class="job-message ${statusClass}">${currentJob.message || 'Processing...'}</div>
+        </div>
+      `;
+      
+      if (currentJob.status === 'completed' || currentJob.status === 'failed') {
+        stopJobPolling();
+        setTimeout(() => {
+          document.querySelector('#runSection button').style.display = '';
+          if (currentJob.status === 'completed') {
+            loadDatasets();
+          }
+        }, 2000);
+      }
+    }
+    
+    function startJobPolling() {
+      if (jobPollInterval) return;
+      
+      jobPollInterval = setInterval(() => {
+        if (!currentJob || currentJob.status === 'completed' || currentJob.status === 'failed') {
+          stopJobPolling();
+          return;
+        }
+        
+        google.script.run
+          .withSuccessHandler(function(job) {
+            if (job) {
+              currentJob = job;
+              updateJobStatus();
+            }
+          })
+          .getJobStatus(currentJob.id);
+      }, 1000);
+    }
+    
+    function stopJobPolling() {
+      if (jobPollInterval) {
+        clearInterval(jobPollInterval);
+        jobPollInterval = null;
+      }
+    }
+    
+    function updateSchedule(datasetId) {
+      const dataset = currentDatasets.find(d => d.id === datasetId);
+      if (!dataset) return;
+      
+      const enabled = document.getElementById('enableSchedule').checked;
+      const freq = document.getElementById('scheduleFreq').value;
+      const timeOfDay = document.getElementById('scheduleTime').value;
+      
+      const updates = {
+        schedule: {
+          enabled: enabled,
+          freq: freq,
+          timeOfDay: timeOfDay
+        }
+      };
+      
+      const button = event.target;
+      button.disabled = true;
+      button.innerHTML = 'Updating... <span class="loading"></span>';
+      
+      google.script.run
+        .withSuccessHandler(function(result) {
+          loadDatasets();
+          showSuccess('Schedule updated successfully');
+          button.disabled = false;
+          button.textContent = 'Update Schedule';
+        })
+        .withFailureHandler(function(error) {
+          showError(error);
+          button.disabled = false;
+          button.textContent = 'Update Schedule';
+        })
+        .updateDataset(datasetId, updates);
+    }
+    
+    // Schedules tab
+    function updateSchedulesList() {
+      const scheduledDatasets = currentDatasets.filter(d => d.schedule && d.schedule.enabled);
+      const listDiv = document.getElementById('schedulesList');
+      
+      if (scheduledDatasets.length === 0) {
+        listDiv.innerHTML = '<p style="color: #666;">No scheduled datasets</p>';
+        return;
+      }
+      
+      listDiv.innerHTML = scheduledDatasets.map(dataset => `
+        <div class="dataset-item">
+          <div class="dataset-info">
+            <div class="dataset-name">${dataset.name}</div>
+            <div class="dataset-type">
+              ${dataset.schedule.freq} ${dataset.schedule.freq !== 'hourly' ? 'at ' + dataset.schedule.timeOfDay : ''}
+            </div>
+          </div>
+          <button class="action" onclick="testScheduledRun('${dataset.id}')">Test Run</button>
+        </div>
+      `).join('');
+    }
+    
+    function testScheduledRun(datasetId) {
+      const button = event.target;
+      button.disabled = true;
+      button.innerHTML = 'Testing... <span class="loading"></span>';
+      
+      google.script.run
+        .withSuccessHandler(function(result) {
+          if (result.success) {
+            showSuccess('Test run completed');
+          } else {
+            showError(result.error);
+          }
+          button.disabled = false;
+          button.textContent = 'Test Run';
+        })
+        .withFailureHandler(function(error) {
+          showError(error);
+          button.disabled = false;
+          button.textContent = 'Test Run';
+        })
+        .testScheduledRun(datasetId);
+    }
+    
+    // Logs tab
+    function loadRecentLogs() {
+      google.script.run
+        .withSuccessHandler(function(logs) {
+          const logsDiv = document.getElementById('recentLogs');
+          
+          if (logs.length === 0) {
+            logsDiv.innerHTML = '<p style="color: #666; text-align: center;">No recent logs</p>';
+            return;
+          }
+          
+          logsDiv.innerHTML = logs.map(log => `
+            <div style="padding: 8px; border-bottom: 1px solid #eee; font-size: 12px;">
+              <div style="display: flex; justify-content: space-between;">
+                <span><strong>${log.action}</strong></span>
+                <span style="color: #666;">${new Date(log.ts_iso).toLocaleString()}</span>
+              </div>
+              ${log.dataset_id ? `<div style="color: #666;">Dataset: ${log.dataset_id}</div>` : ''}
+              ${log.status === 'error' ? `<div style="color: #d32f2f;">Error: ${log.error_message}</div>` : ''}
+              ${log.status === 'success' && log.rows ? `<div style="color: #388e3c;">Rows: ${log.rows}</div>` : ''}
+            </div>
+          `).join('');
+        })
+        .withFailureHandler(showError)
+        .getRecentLogs(20);
+    }
+    
+    function viewFullLogs() {
+      google.script.run.showLogsSheet();
+    }
+    
+    // Settings tab
+    function loadSettings() {
+      google.script.run
+        .withSuccessHandler(function(creds) {
+          document.getElementById('clientId').value = creds.clientId || '';
+          // Don't show client secret for security
+        })
+        .getOAuthCredentials();
+        
+      // Load other settings
+      const useSandbox = localStorage.getItem('qbo_use_sandbox') === 'true';
+      const enableNotifications = localStorage.getItem('qbo_enable_notifications') === 'true';
+      
+      document.getElementById('useSandbox').checked = useSandbox;
+      document.getElementById('enableNotifications').checked = enableNotifications;
+    }
+    
+    function saveOAuthSettings() {
+      const clientId = document.getElementById('clientId').value.trim();
+      const clientSecret = document.getElementById('clientSecret').value.trim();
+      
+      if (!clientId || !clientSecret) {
+        showError('Both Client ID and Client Secret are required');
+        return;
+      }
+      
+      const button = event.target;
+      button.disabled = true;
+      button.innerHTML = 'Saving... <span class="loading"></span>';
+      
+      google.script.run
+        .withSuccessHandler(function(result) {
+          if (result.success) {
+            showSuccess('OAuth settings saved successfully');
+            document.getElementById('clientSecret').value = '';
+            updateConnectionStatus();
+          } else {
+            showError(result.error);
+          }
+          button.disabled = false;
+          button.textContent = 'Save Settings';
+        })
+        .withFailureHandler(function(error) {
+          showError(error);
+          button.disabled = false;
+          button.textContent = 'Save Settings';
+        })
+        .setOAuthCredentials(clientId, clientSecret);
+        
+      // Save other settings
+      localStorage.setItem('qbo_use_sandbox', document.getElementById('useSandbox').checked);
+      localStorage.setItem('qbo_enable_notifications', document.getElementById('enableNotifications').checked);
+    }
+    
+    // Tab switching
+    function switchTab(tabName) {
+      // Update tab buttons
+      document.querySelectorAll('.tab').forEach(tab => {
+        tab.classList.remove('active');
+      });
+      event.target.classList.add('active');
+      
+      // Update tab content
+      document.querySelectorAll('.tab-content').forEach(content => {
+        content.classList.remove('active');
+      });
+      document.getElementById(tabName + 'Tab').classList.add('active');
+      
+      // Load tab-specific data
+      if (tabName === 'logs' && isConnected) {
+        loadRecentLogs();
+      } else if (tabName === 'schedules' && isConnected) {
+        updateSchedulesList();
+      }
+    }
+    
+    // Utility functions
+    function showError(error) {
+      console.error(error);
+      google.script.run.showToast(error.toString(), 'Error');
+    }
+    
+    function showSuccess(message) {
+      google.script.run.showToast(message, 'Success');
+    }
+    
+    function formatReportType(type) {
+      const names = {
+        'profitAndLoss': 'Profit and Loss',
+        'balanceSheet': 'Balance Sheet',
+        'trialBalance': 'Trial Balance',
+        'transactionListByDate': 'Transaction List',
+        'salesByCustomer': 'Sales by Customer'
+      };
+      return names[type] || type;
+    }
+    
+    // Modal handling
+    window.onclick = function(event) {
+      if (event.target.classList.contains('modal')) {
+        event.target.style.display = 'none';
+      }
+    };
+  </script>
+</body>
+</html>

@@ -40,7 +40,7 @@ A production-ready Google Sheets add-on that connects to QuickBooks Online for i
    - `Datasets.gs`
    - `Scheduler.gs`
    - `Logging.gs`
-   - `UI.gs`
+   - `UiServer.gs`
    - `UI.html`
 5. Copy `appsscript.json` to configure manifest
 6. Save the project with a name like "QBO Connector"

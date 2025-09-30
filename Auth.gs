@@ -634,3 +634,48 @@ function debugAuthUrl() {
   const service = getOAuthService();
   Logger.log(service.getAuthorizationUrl());
 }
+
+/**
+ * Wipes all stored QuickBooks Online authentication state
+ */
+function wipeQboAuthState() {
+  try {
+    const service = getOAuthService();
+    service.reset();
+  } catch (error) {
+    console.error('Error resetting OAuth service:', error);
+  }
+
+  const properties = PropertiesService.getUserProperties();
+  const snapshot = properties.getProperties();
+  const keysToDelete = [
+    'QBO_CLIENT_ID',
+    'QBO_CLIENT_SECRET',
+    'QBO_REALM_ID',
+    'QBO_COMPANY_NAME',
+    'QBO_USE_SANDBOX',
+    LOG_BATCH_KEY
+  ];
+
+  keysToDelete.forEach(function(key) {
+    try {
+      properties.deleteProperty(key);
+    } catch (error) {
+      console.error('Error deleting property:', key, error);
+    }
+  });
+
+  Object.keys(snapshot)
+    .filter(function(key) {
+      return key.indexOf('oauth2.QuickBooksOnline') === 0;
+    })
+    .forEach(function(key) {
+      try {
+        properties.deleteProperty(key);
+      } catch (error) {
+        console.error('Error deleting OAuth cache property:', key, error);
+      }
+    });
+
+  logAction('wipe_oauth_state');
+}

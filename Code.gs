@@ -8,7 +8,7 @@ const ADDON_TITLE = 'QuickBooks Online Connector';
 const CONFIG_SHEET_NAME = '_QBO_Config';
 const LOGS_SHEET_NAME = 'QBO_Connector_Logs';
 const DEFAULT_MINOR_VERSION = '75';
-const SCRIPT_VERSION = '1.0.3';
+const SCRIPT_VERSION = '1.0.4';
 
 // Global state for UI updates
 let globalJobStatus = null;

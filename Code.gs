@@ -8,7 +8,7 @@ const ADDON_TITLE = 'QuickBooks Online Connector';
 const CONFIG_SHEET_NAME = '_QBO_Config';
 const LOGS_SHEET_NAME = 'QBO_Connector_Logs';
 const DEFAULT_MINOR_VERSION = '75';
-const SCRIPT_VERSION = '1.0.0';
+const SCRIPT_VERSION = '1.0.3';
 
 // Global state for UI updates
 let globalJobStatus = null;
@@ -37,6 +37,8 @@ function onOpen(e) {
   try {
     const ui = SpreadsheetApp.getUi();
     
+    const versionLabel = `Version ${SCRIPT_VERSION}`;
+
     ui.createAddonMenu()
       .addItem('Open Connector', 'showSidebar')
       .addSeparator()
@@ -45,6 +47,8 @@ function onOpen(e) {
       .addSeparator()
       .addItem('Settings', 'showSettings')
       .addItem('About', 'showAbout')
+      .addSeparator()
+      .addItem(versionLabel, 'showVersionInfo')
       .addToUi();
       
     ensureLogFlushTrigger();
@@ -181,6 +185,23 @@ For support, visit: https://github.com/brklyngg/QBO-Sheets-Connector`;
   ui.alert('About', message, ui.ButtonSet.OK);
   
   logAction('show_about');
+}
+
+/**
+ * Shows the current deployed version in a toast
+ */
+function showVersionInfo() {
+  try {
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const title = 'QuickBooks Online Connector';
+    ss.toast(`Running version ${SCRIPT_VERSION}`, title, 5);
+
+    logAction('show_version', {
+      version: SCRIPT_VERSION
+    });
+  } catch (error) {
+    console.error('Error showing version info:', error);
+  }
 }
 
 /**

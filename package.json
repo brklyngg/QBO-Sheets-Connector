@@ -1,0 +1,12 @@
+{
+  "name": "qbo-sheets-connector",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "clasp:push": "node scripts/push-with-version.mjs"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

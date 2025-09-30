@@ -53,6 +53,20 @@ A production-ready Google Sheets add-on that connects to QuickBooks Online for i
 3. Select **Install add-on** for testing
 4. For production deployment, follow [Google's add-on publishing guide](https://developers.google.com/workspace/add-ons/how-tos/publish-add-on-overview)
 
+## clasp Deployment Workflow
+
+Each push through clasp now increments the in-sheet version indicator so you can immediately confirm that the latest code is live.
+
+1. Make your code changes locally.
+2. Run `npm run clasp:push` from the project root.
+   - The script automatically bumps the `SCRIPT_VERSION` constant (patch component) and commits it to `Code.gs`.
+   - It then executes `clasp push` so the Apps Script project receives the update.
+3. Reload the Google Sheet and open **Extensions > QuickBooks Online Connector**.
+   - The menu contains an item such as `Version 1.0.5`; selecting it pops a toast confirming the deployed version.
+   - If the number matches what the script printed locally, the push succeeded.
+
+> Note: The helper script only requires Node 18+. No dependencies or npm install steps are necessary.
+
 ## Setup
 
 ### 1. Create QuickBooks App

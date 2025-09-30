@@ -17,9 +17,11 @@ const INTUIT_DISCOVERY_URL = 'https://developer.api.intuit.com/.well-known/openi
  */
 function getStoredOAuthCredentials() {
   const properties = PropertiesService.getUserProperties();
+  const clientId = (properties.getProperty('QBO_CLIENT_ID') || '').trim();
+  const clientSecret = (properties.getProperty('QBO_CLIENT_SECRET') || '').trim();
   return {
-    clientId: properties.getProperty('QBO_CLIENT_ID') || '',
-    clientSecret: properties.getProperty('QBO_CLIENT_SECRET') || ''
+    clientId: clientId,
+    clientSecret: clientSecret
   };
 }
 
@@ -45,7 +47,14 @@ function buildTokenHeaders(clientId, clientSecret) {
     'Content-Type': 'application/x-www-form-urlencoded'
   };
   if (clientId && clientSecret) {
-    headers['Authorization'] = 'Basic ' + Utilities.base64Encode(clientId + ':' + clientSecret);
+    const sanitizedClientId = String(clientId).trim();
+    const sanitizedClientSecret = String(clientSecret).trim();
+    if (sanitizedClientId && sanitizedClientSecret) {
+      const rawCredentials = `${sanitizedClientId}:${sanitizedClientSecret}`;
+      const encodedCredentials = Utilities.base64Encode(rawCredentials).replace(/\r?\n/g, '');
+      // Intuit rejects credentials when the Basic header contains line breaks (default Apps Script behaviour)
+      headers['Authorization'] = 'Basic ' + encodedCredentials;
+    }
   }
   return headers;
 }
@@ -73,10 +82,11 @@ function getOAuthService() {
  * OAuth callback handler
  */
 function authCallback(request) {
+  let service;
   try {
-    const service = getOAuthService();
+    service = getOAuthService();
     const isAuthorized = service.handleCallback(request);
-    
+
     if (isAuthorized) {
       // Extract and store the realmId from the callback
       const realmId = request.parameter.realmId;
@@ -84,22 +94,71 @@ function authCallback(request) {
         PropertiesService.getUserProperties().setProperty('QBO_REALM_ID', realmId);
         logAction('auth_callback_success', { realmId: realmId });
       }
-      
+
       return HtmlService.createHtmlOutput(getSuccessHTML());
     } else {
-      logAction('auth_callback_failed', { 
-        error: 'Authorization failed',
+      const lastError = service.getLastError();
+      debugTokenExchange(request);
+      logAction('auth_callback_failed', {
+        error: lastError || 'Authorization failed',
         parameters: Object.keys(request.parameter || {})
       });
       return HtmlService.createHtmlOutput(getFailureHTML('Authorization failed'));
     }
   } catch (error) {
-    console.error('Auth callback error:', error);
-    logAction('auth_callback_error', { 
+    const lastError = service && typeof service.getLastError === 'function'
+      ? service.getLastError()
+      : null;
+    const lastResponse = service && typeof service.getLastResponse === 'function'
+      ? service.getLastResponse()
+      : null;
+
+    console.error('Auth callback error:', error, lastError, lastResponse);
+    logAction('auth_callback_error', {
       error: error.toString(),
-      stack: error.stack 
+      stack: error.stack,
+      lastError: lastError,
+      lastResponse: lastResponse,
+      parameters: Object.keys(request.parameter || {})
     });
-    return HtmlService.createHtmlOutput(getFailureHTML(error.toString()));
+    const message = lastError || (lastResponse ? JSON.stringify(lastResponse) : error.toString());
+    return HtmlService.createHtmlOutput(getFailureHTML(message));
+  }
+}
+
+function debugTokenExchange(request) {
+  try {
+    const code = request && request.parameter ? request.parameter.code : null;
+    if (!code) {
+      return;
+    }
+
+    const { clientId, clientSecret } = requireOAuthCredentials();
+    const redirectUri = `https://script.google.com/macros/d/${ScriptApp.getScriptId()}/usercallback`;
+
+    const response = UrlFetchApp.fetch(INTUIT_TOKEN_URL, {
+      method: 'POST',
+      muteHttpExceptions: true,
+      headers: {
+        ...buildTokenHeaders(clientId, clientSecret)
+      },
+      payload: {
+        grant_type: 'authorization_code',
+        code: code,
+        redirect_uri: redirectUri
+      }
+    });
+
+    logAction('debug_token_exchange', {
+      status: response.getResponseCode(),
+      responseBody: response.getContentText(),
+      headers: response.getHeaders(),
+      redirectUri: redirectUri
+    });
+  } catch (error) {
+    logAction('debug_token_exchange_error', {
+      error: error.toString()
+    });
   }
 }
 
@@ -532,18 +591,21 @@ function getFailureHTML(error) {
  */
 function setOAuthCredentials(clientId, clientSecret) {
   try {
-    if (!clientId || !clientSecret) {
+    const sanitizedClientId = String(clientId || '').trim();
+    const sanitizedClientSecret = String(clientSecret || '').trim();
+
+    if (!sanitizedClientId || !sanitizedClientSecret) {
       throw new Error('Both Client ID and Client Secret are required');
     }
-    
-    PropertiesService.getUserProperties().setProperty('QBO_CLIENT_ID', clientId);
-    PropertiesService.getUserProperties().setProperty('QBO_CLIENT_SECRET', clientSecret);
-    
+
+    PropertiesService.getUserProperties().setProperty('QBO_CLIENT_ID', sanitizedClientId);
+    PropertiesService.getUserProperties().setProperty('QBO_CLIENT_SECRET', sanitizedClientSecret);
+
     logAction('set_oauth_credentials', {
-      hasClientId: !!clientId,
-      hasClientSecret: !!clientSecret
+      hasClientId: true,
+      hasClientSecret: true
     });
-    
+
     return {
       success: true,
       message: 'OAuth credentials saved successfully'
@@ -561,8 +623,14 @@ function setOAuthCredentials(clientId, clientSecret) {
  * Gets OAuth credentials (for settings UI)
  */
 function getOAuthCredentials() {
+  const { clientId, clientSecret } = getStoredOAuthCredentials();
   return {
-    clientId: PropertiesService.getUserProperties().getProperty('QBO_CLIENT_ID') || '',
-    hasClientSecret: !!PropertiesService.getUserProperties().getProperty('QBO_CLIENT_SECRET')
+    clientId: clientId,
+    hasClientSecret: !!clientSecret
   };
+}
+
+function debugAuthUrl() {
+  const service = getOAuthService();
+  Logger.log(service.getAuthorizationUrl());
 }

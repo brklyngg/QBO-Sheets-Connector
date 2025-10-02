@@ -31,5 +31,8 @@
         "runFunction": "showSidebar"
       }
     }
+  },
+  "executionApi": {
+    "access": "MYSELF"
   }
 }

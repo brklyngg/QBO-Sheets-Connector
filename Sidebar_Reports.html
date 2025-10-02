@@ -1,0 +1,172 @@
+<!doctype html>
+<html>
+  <head>
+    <base target="_top">
+    <link rel="stylesheet" href="https://ssl.gstatic.com/docs/script/css/add-ons1.css">
+    <style>
+      body { font: 14px/1.4 system-ui, sans-serif; padding: 10px; }
+      .row { margin: 8px 0; }
+      input, select { width: 100%; box-sizing: border-box; }
+      .status { margin-top: 10px; padding: 8px; border-radius: 4px; display: none; }
+      .ok { background: #e6f4ea; color: #1e8e3e; }
+      .err { background: #fce8e6; color: #d93025; }
+      details { background: #fafafa; padding: 6px 8px; border: 1px solid #eee; border-radius: 6px; }
+      summary { cursor: pointer; font-weight: 600; }
+      .muted { color: #666; font-size: 12px; }
+      button { width: 100%; }
+    </style>
+  </head>
+  <body>
+    <h3>QBO Reports</h3>
+    <div id="auth" class="row"></div>
+
+    <div class="row">
+      <label>Report</label>
+      <select id="reportName">
+        <option value="ProfitAndLoss">Profit and Loss</option>
+        <option value="BalanceSheet">Balance Sheet</option>
+        <option value="CashFlow">Cash Flow</option>
+        <option value="CustomerSales">Sales by Customer Summary</option>
+        <option value="AgedReceivables">A/R Aging Summary</option>
+      </select>
+    </div>
+
+    <div class="row">
+      <label>Start date (if supported)</label>
+      <input id="startDate" type="date">
+    </div>
+
+    <div class="row">
+      <label>End date / As-of date</label>
+      <input id="endDate" type="date">
+    </div>
+
+    <details class="row">
+      <summary>Advanced</summary>
+      <div class="row">
+        <label>Accounting method</label>
+        <select id="method">
+          <option value="">(default)</option>
+          <option>Accrual</option>
+          <option>Cash</option>
+        </select>
+      </div>
+      <div class="row">
+        <label>Summarize by</label>
+        <select id="summarize">
+          <option value="">(none)</option>
+          <option>Month</option>
+          <option>Quarter</option>
+          <option>Year</option>
+          <option>Customers</option>
+          <option>Vendors</option>
+          <option>ProductsAndServices</option>
+        </select>
+      </div>
+      <div class="row">
+        <label>Columns (comma-separated if supported)</label>
+        <input id="columns" placeholder="e.g., Time,Account,Total">
+      </div>
+      <div class="row">
+        <label>Sheet name (optional)</label>
+        <input id="sheetName" placeholder="Defaults to QBO_<ReportName>">
+      </div>
+    </details>
+
+    <div class="row">
+      <button id="run" class="action">Run report</button>
+    </div>
+
+    <div id="status" class="status"></div>
+
+    <p class="muted">Redirect URI to register: <code>https://script.google.com/macros/d/{SCRIPT_ID}/usercallback</code></p>
+
+    <script>
+      const $ = selector => document.querySelector(selector);
+
+      function setStatus(message, ok) {
+        const el = $('#status');
+        el.textContent = message;
+        el.className = 'status ' + (ok ? 'ok' : 'err');
+        el.style.display = 'block';
+      }
+
+      function clearStatus() {
+        const el = $('#status');
+        el.textContent = '';
+        el.className = 'status';
+        el.style.display = 'none';
+      }
+
+      function refreshAuth() {
+        google.script.run.withSuccessHandler(info => {
+          $('#auth').innerHTML = info.isAuthed
+            ? `Connected | Realm: <b>${info.realmId || '(none)'}</b> | Env: <b>${info.env}</b> | Minor: <b>${info.minor}</b> <button id="logout">Logout</button>`
+            : `Not connected <button id="authBtn">Authorize</button>`;
+
+          const authorizeButton = document.getElementById('authBtn');
+          if (authorizeButton) {
+            authorizeButton.onclick = () => {
+              google.script.run
+                .withSuccessHandler(url => window.open(url, '_blank'))
+                .withFailureHandler(error => setStatus(error.message, false))
+                .getAuthorizationUrl();
+            };
+          }
+
+          const logoutButton = document.getElementById('logout');
+          if (logoutButton) {
+            logoutButton.onclick = () => {
+              google.script.run
+                .withSuccessHandler(() => {
+                  setStatus('Logged out', true);
+                  refreshAuth();
+                })
+                .withFailureHandler(error => setStatus(error.message, false))
+                .logout();
+            };
+          }
+
+          if (info.error) {
+            setStatus(info.error, false);
+          } else {
+            clearStatus();
+          }
+        }).uiGetStatus();
+      }
+
+      function runReport() {
+        const payload = {
+          reportName: $('#reportName').value,
+          params: {
+            start_date: $('#startDate').value || '',
+            end_date: $('#endDate').value || '',
+            accounting_method: $('#method').value || '',
+            summarize_column_by: $('#summarize').value || '',
+            columns: $('#columns').value || ''
+          },
+          sheetName: $('#sheetName').value || ''
+        };
+
+        $('#run').disabled = true;
+        setStatus('Running...', true);
+
+        google.script.run
+          .withSuccessHandler(result => {
+            setStatus(result.msg, result.ok);
+            $('#run').disabled = false;
+          })
+          .withFailureHandler(error => {
+            setStatus(error.message, false);
+            $('#run').disabled = false;
+          })
+          .uiRunReport(payload.reportName, payload.params, payload.sheetName);
+      }
+
+      document.addEventListener('DOMContentLoaded', () => {
+        refreshAuth();
+        $('#run').onclick = runReport;
+      });
+    </script>
+  </body>
+</html>

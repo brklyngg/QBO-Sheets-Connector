@@ -7,26 +7,458 @@
     body {
       font-family: 'Google Sans', Roboto, Arial, sans-serif;
       padding: 16px;
+      margin: 0;
+      font-size: 13px;
       color: #202124;
+      background: #f1f3f4;
     }
-    h1 {
-      font-size: 18px;
-      margin: 0 0 12px;
+    
+    .container {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 0;
     }
-    h2 {
-      font-size: 14px;
-      margin: 16px 0 8px;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      color: #5f6368;
-    }
+    
     .section {
+      margin-bottom: 16px;
       border: 1px solid #dadce0;
       border-radius: 8px;
       padding: 16px;
-      margin-bottom: 12px;
       background: #fff;
+      box-shadow: 0 1px 2px rgba(60,64,67,0.1);
     }
+    
+    .section-title {
+      font-weight: bold;
+      margin-bottom: 12px;
+      color: #333;
+      font-size: 16px;
+    }
+    
+    .connection-status {
+      padding: 12px;
+      border-radius: 4px;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    
+    .connected {
+      background: #e8f5e9;
+      color: #2e7d32;
+      border: 1px solid #81c784;
+    }
+    
+    .disconnected {
+      background: #ffebee;
+      color: #c62828;
+      border: 1px solid #ef5350;
+    }
+    
+    .status-icon {
+      font-size: 20px;
+      margin-right: 8px;
+    }
+    
+    .company-info {
+      font-size: 12px;
+      color: #666;
+      margin-top: 4px;
+    }
+    
+    .dataset-list {
+      max-height: 200px;
+      overflow-y: auto;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      background: white;
+    }
+
+    .schedule-summary {
+      background: #f5f9ff;
+      border: 1px solid #cdd8f1;
+      border-radius: 4px;
+      padding: 12px;
+      margin-bottom: 12px;
+      font-size: 13px;
+      color: #1f3a63;
+    }
+
+    .schedule-summary strong {
+      font-weight: 600;
+    }
+
+    .schedule-warning {
+      color: #c62828;
+      font-weight: 600;
+      margin-top: 8px;
+    }
+
+    .schedule-item {
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      padding: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+      background: white;
+    }
+
+    .schedule-item--warning {
+      border-color: #f57c00;
+      background: #fff7e6;
+    }
+
+    .schedule-details {
+      flex: 1;
+      margin-right: 16px;
+    }
+
+    .schedule-meta {
+      color: #555;
+      font-size: 12px;
+      margin-top: 4px;
+    }
+
+    .schedule-status {
+      font-size: 12px;
+      margin-top: 6px;
+    }
+
+    .schedule-status.success {
+      color: #388e3c;
+    }
+
+    .schedule-status.warning {
+      color: #c62828;
+    }
+
+    .schedule-next {
+      font-size: 12px;
+      color: #666;
+      margin-top: 4px;
+    }
+
+    .schedule-actions {
+      display: flex;
+      align-items: center;
+    }
+    
+    .dataset-item {
+      padding: 12px;
+      border-bottom: 1px solid #eee;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .dataset-item:hover {
+      background: #f5f5f5;
+    }
+    
+    .dataset-item.selected {
+      background: #e3f2fd;
+      border-left: 3px solid #2196f3;
+    }
+    
+    .dataset-info {
+      flex: 1;
+    }
+    
+    .dataset-name {
+      font-weight: 500;
+      margin-bottom: 2px;
+    }
+    
+    .dataset-type {
+      font-size: 12px;
+      color: #666;
+    }
+    
+    .dataset-actions {
+      display: flex;
+      gap: 8px;
+    }
+    
+    .icon-button {
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 4px;
+      color: #666;
+      font-size: 16px;
+    }
+    
+    .icon-button:hover {
+      color: #333;
+    }
+    
+    .form-group {
+      margin-bottom: 16px;
+    }
+    
+    .form-label {
+      display: block;
+      margin-bottom: 4px;
+      font-weight: 500;
+      color: #333;
+    }
+    
+    .form-input {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 14px;
+    }
+    
+    .form-select {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 14px;
+      background: white;
+    }
+    
+    .form-textarea {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 14px;
+      font-family: monospace;
+      min-height: 80px;
+      resize: vertical;
+    }
+    
+    .button-group {
+      display: flex;
+      gap: 8px;
+      margin-top: 16px;
+    }
+    
+    .job-status {
+      padding: 16px;
+      background: #f5f5f5;
+      border-radius: 4px;
+      margin-top: 12px;
+    }
+    
+    .job-progress {
+      margin: 12px 0;
+    }
+    
+    .progress-bar {
+      height: 20px;
+      background: #e0e0e0;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    
+    .progress-fill {
+      height: 100%;
+      background: #4285f4;
+      transition: width 0.3s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 12px;
+    }
+    
+    .job-message {
+      font-size: 13px;
+      color: #666;
+      margin-top: 8px;
+    }
+    
+    .error-message {
+      color: #d32f2f;
+      font-size: 13px;
+      margin-top: 8px;
+      padding: 8px;
+      background: #ffebee;
+      border-radius: 4px;
+    }
+    
+    .success-message {
+      color: #388e3c;
+      font-size: 13px;
+      margin-top: 8px;
+      padding: 8px;
+      background: #e8f5e9;
+      border-radius: 4px;
+    }
+    
+    .loading {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      border: 2px solid #f3f3f3;
+      border-top: 2px solid #4285f4;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-left: 8px;
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    
+    .tabs {
+      display: flex;
+      border-bottom: 2px solid #e0e0e0;
+      margin-bottom: 16px;
+    }
+    
+    .tab {
+      padding: 8px 16px;
+      cursor: pointer;
+      border: none;
+      background: none;
+      font-size: 14px;
+      color: #666;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -2px;
+    }
+    
+    .tab:hover {
+      color: #333;
+    }
+    
+    .tab.active {
+      color: #4285f4;
+      border-bottom-color: #4285f4;
+      font-weight: 500;
+    }
+    
+    .tab-content {
+      display: none;
+    }
+    
+    .tab-content.active {
+      display: block;
+    }
+    
+    .schedule-config {
+      border: 1px solid #ddd;
+      padding: 12px;
+      border-radius: 4px;
+      background: #fafafa;
+    }
+    
+    .checkbox-group {
+      display: flex;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+    
+    .checkbox-group input[type="checkbox"] {
+      margin-right: 8px;
+    }
+    
+    .help-text {
+      font-size: 12px;
+      color: #666;
+      margin-top: 4px;
+    }
+    
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0,0,0,0.4);
+    }
+    
+    .modal-content {
+      background-color: #fefefe;
+      margin: 15% auto;
+      padding: 20px;
+      border: 1px solid #888;
+      width: 80%;
+      max-width: 500px;
+      border-radius: 8px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+    
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid #e0e0e0;
+    }
+    
+    .modal-title {
+      font-size: 18px;
+      font-weight: 500;
+      margin: 0;
+    }
+    
+    .close {
+      color: #aaa;
+      font-size: 28px;
+      font-weight: bold;
+      cursor: pointer;
+      line-height: 20px;
+    }
+    
+    .close:hover,
+    .close:focus {
+      color: black;
+    }
+    
+    .empty-state {
+      text-align: center;
+      padding: 40px 20px;
+      color: #666;
+    }
+    
+    .empty-state-icon {
+      font-size: 48px;
+      color: #ddd;
+      margin-bottom: 16px;
+    }
+    
+    .tooltip {
+      position: relative;
+      display: inline-block;
+      cursor: help;
+      color: #666;
+      margin-left: 4px;
+    }
+    
+    .tooltip .tooltiptext {
+      visibility: hidden;
+      width: 200px;
+      background-color: #333;
+      color: #fff;
+      text-align: left;
+      border-radius: 4px;
+      padding: 8px;
+      position: absolute;
+      z-index: 1;
+      bottom: 125%;
+      left: 50%;
+      margin-left: -100px;
+      font-size: 12px;
+      line-height: 1.4;
+    }
+    
+    .tooltip:hover .tooltiptext {
+      visibility: visible;
+    }
+  
     .status-row {
       display: flex;
       align-items: center;
@@ -41,35 +473,32 @@
       font-weight: 600;
       background: #e8eaed;
       color: #202124;
+      border: 1px solid #e8eaed;
     }
     .status-pill.connected {
       background: #e6f4ea;
       color: #0f9d58;
-      border: 1px solid #0f9d58;
+      border-color: #0f9d58;
     }
     .status-pill.disconnected {
       background: #fce8e6;
       color: #d93025;
-      border: 1px solid #d93025;
+      border-color: #d93025;
     }
     .details {
       font-size: 12px;
       color: #5f6368;
       margin-bottom: 12px;
-      line-height: 1.5;
+      white-space: pre-line;
     }
-    label {
-      font-size: 12px;
-      display: block;
-      margin-bottom: 6px;
-    }
-    input, select {
-      width: 100%;
-      box-sizing: border-box;
-      padding: 8px;
-      border: 1px solid #dadce0;
-      border-radius: 4px;
+    .button-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
       margin-bottom: 12px;
+    }
+    .button-row button {
+      flex: 1 1 auto;
     }
     button {
       display: inline-flex;
@@ -97,11 +526,20 @@
       color: #9aa0a6;
       cursor: default;
     }
-    .button-row {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
+    label {
+      font-size: 12px;
+      display: block;
+      margin-bottom: 6px;
+    }
+    input, select, textarea {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 8px;
+      border: 1px solid #dadce0;
+      border-radius: 4px;
       margin-bottom: 12px;
+      font-size: 13px;
+      background: #fff;
     }
     .stored-value {
       font-size: 12px;
@@ -134,6 +572,7 @@
       pointer-events: none;
       transition: opacity 0.2s;
       font-size: 12px;
+      z-index: 999;
     }
     .toast.show {
       opacity: 1;
@@ -142,70 +581,490 @@
     .toast.error {
       background: #d93025;
     }
-    .small {
-      font-size: 11px;
-      color: #5f6368;
-    }
     .test-result {
       font-size: 12px;
       padding: 8px;
       border-radius: 4px;
       background: #f1f3f4;
       margin-top: 8px;
+      display: none;
+    }
+    .tabs {
+      display: flex;
+      gap: 8px;
+      margin: 16px 0;
+    }
+    .tab {
+      padding: 8px 12px;
+      border: 1px solid #dadce0;
+      border-radius: 20px;
+      background: #f8f9fa;
+      cursor: pointer;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      color: #5f6368;
+    }
+    .tab.active {
+      background: #1a73e8;
+      color: #fff;
+      border-color: #1a73e8;
+    }
+    .tab-content {
+      display: none;
+    }
+    .tab-content.active {
+      display: block;
+    }
+    .dataset-item {
+      padding: 12px;
+      border-bottom: 1px solid #eee;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .dataset-item:hover {
+      background: #f1f3f4;
+    }
+    .dataset-item.selected {
+      background: #e8f0fe;
+      border-left: 3px solid #1a73e8;
+    }
+    .dataset-info {
+      flex: 1;
+    }
+    .dataset-name {
+      font-weight: 500;
+      margin-bottom: 2px;
+    }
+    .dataset-type {
+      font-size: 12px;
+      color: #5f6368;
+    }
+    .dataset-actions {
+      display: flex;
+      gap: 8px;
+    }
+    .icon-button {
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 4px;
+      color: #5f6368;
+      font-size: 16px;
+    }
+    .icon-button:hover {
+      color: #1a73e8;
+    }
+    .empty-state {
+      text-align: center;
+      padding: 40px 20px;
+      color: #5f6368;
+    }
+    .empty-state-icon {
+      font-size: 48px;
+      color: #dadce0;
+      margin-bottom: 16px;
+    }
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      overflow: auto;
+      background-color: rgba(0,0,0,0.4);
+    }
+    .modal-content {
+      background-color: #fff;
+      margin: 60px auto;
+      padding: 0;
+      border-radius: 8px;
+      width: 90%;
+      max-width: 520px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+    }
+    .modal-header {
+      padding: 16px;
+      border-bottom: 1px solid #dadce0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .modal-title {
+      margin: 0;
+      font-size: 16px;
+    }
+    .modal-body {
+      padding: 16px;
+    }
+    .modal-footer {
+      padding: 12px 16px;
+      border-top: 1px solid #dadce0;
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+    }
+    .close {
+      color: #5f6368;
+      font-size: 24px;
+      cursor: pointer;
+    }
+    .close:hover {
+      color: #202124;
+    }
+    .small {
+      font-size: 11px;
+      color: #5f6368;
     }
   </style>
 </head>
 <body>
-  <h1>QuickBooks Connection Tester</h1>
+  <div class="container">
+    <div class="section" id="statusSection">
+      <h2>Status</h2>
+      <div class="status-row">
+        <span id="statusPill" class="status-pill">Checking…</span>
+      </div>
+      <div id="statusDetails" class="details"></div>
+      <div class="button-row">
+        <button id="connectBtn">Connect to QuickBooks</button>
+        <button id="refreshBtn" class="secondary">Refresh Status</button>
+        <button id="disconnectBtn" class="danger">Disconnect</button>
+      </div>
+      <button id="testBtn" class="secondary">Test Company Info</button>
+      <div id="testResult" class="test-result"></div>
+    </div>
 
-  <div class="section" id="statusSection">
-    <h2>Status</h2>
-    <div class="status-row">
-      <span id="statusPill" class="status-pill">Checking…</span>
+    <div class="section" id="credentialsSection">
+      <h2>Credentials</h2>
+      <div class="info-box">
+        <strong>Redirect URI:</strong>
+        <div id="redirectUri" style="word-break: break-all;"></div>
+        <div class="small" style="margin-top:6px;">Add this URI to your Intuit app configuration before attempting to connect.</div>
+      </div>
+      <label for="clientId">Client ID</label>
+      <input type="text" id="clientId" placeholder="Paste your QuickBooks Client ID">
+
+      <label for="clientSecret">Client Secret</label>
+      <input type="password" id="clientSecret" placeholder="Paste your QuickBooks Client Secret">
+
+      <label for="environment">Environment</label>
+      <select id="environment">
+        <option value="sandbox">Sandbox</option>
+        <option value="production">Production</option>
+      </select>
+
+      <div class="stored-value">
+        Stored Client ID: <code id="storedClientId">None</code><br>
+        Stored Client Secret: <code id="storedClientSecret">None</code>
+      </div>
+
+      <button id="saveBtn">Save Credentials</button>
     </div>
-    <div id="statusDetails" class="details"></div>
-    <div class="button-row">
-      <button id="connectBtn">Connect to QuickBooks</button>
-      <button id="refreshBtn" class="secondary">Refresh Status</button>
-      <button id="disconnectBtn" class="danger">Disconnect</button>
+
+    <div class="toast" id="toast"></div>
+
+    <!-- Tabs -->
+    <!-- Tabs -->
+    <div class="tabs">
+      <button class="tab" data-tab="datasets" onclick="switchTab('datasets', this)">Datasets</button>
+      <button class="tab" data-tab="schedules" onclick="switchTab('schedules', this)">Schedules</button>
+      <button class="tab" data-tab="logs" onclick="switchTab('logs', this)">Logs</button>
+      <button class="tab" data-tab="settings" onclick="switchTab('settings', this)">Settings</button>
     </div>
-    <button id="testBtn" class="secondary" style="margin-bottom:0;">Test Company Info</button>
-    <div id="testResult" class="test-result" style="display:none;"></div>
+    
+    <!-- Datasets Tab -->
+    <div id="datasetsTab" class="tab-content">
+      <!-- Datasets Section -->
+      <div class="section">
+        <div class="section-title">
+          Datasets
+          <button class="action" style="float: right;" onclick="showCreateDatasetModal()">+ New Dataset</button>
+        </div>
+        
+        <div id="datasetList" class="dataset-list">
+          <div class="empty-state">
+            <div class="empty-state-icon">📊</div>
+            <div>No datasets configured</div>
+            <div style="font-size: 12px; margin-top: 8px;">Create a dataset to start importing data from QuickBooks</div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Run Section -->
+      <div class="section">
+        <div class="section-title">Run Dataset</div>
+        <div id="runSection">
+          <p style="color: #666; text-align: center;">Select a dataset above to run</p>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Schedules Tab -->
+    <div id="schedulesTab" class="tab-content">
+      <div class="section">
+        <div class="section-title">Scheduled Datasets</div>
+        <div id="schedulesList"></div>
+      </div>
+    </div>
+    
+    <!-- Logs Tab -->
+    <div id="logsTab" class="tab-content">
+      <div class="section">
+        <div class="section-title">
+          Recent Logs
+          <button class="action" style="float: right;" onclick="viewFullLogs()">View All</button>
+        </div>
+        <div id="recentLogs" style="max-height: 400px; overflow-y: auto;"></div>
+      </div>
+    </div>
+    
+    <!-- Settings Tab -->
+    <div id="settingsTab" class="tab-content">
+      <div class="section">
+        <div class="section-title">Advanced Settings</div>
+        <div class="checkbox-group">
+          <input type="checkbox" id="enableNotifications">
+          <label for="enableNotifications">Email notifications for schedule errors</label>
+        </div>
+      </div>
+    </div>
   </div>
+  
+  <!-- Create Dataset Modal -->
+  <div id="createDatasetModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 class="modal-title">Create New Dataset</h3>
+        <span class="close" onclick="closeModal('createDatasetModal')">&times;</span>
+      </div>
+      
+      <div class="form-group">
+        <label class="form-label">Dataset Name</label>
+        <input type="text" id="datasetName" class="form-input" placeholder="e.g., Monthly P&L Report">
+      </div>
+      
+      <div class="form-group">
+        <label class="form-label">Type</label>
+        <select id="datasetType" class="form-select" onchange="onDatasetTypeChange()">
+          <option value="">Select type...</option>
+          <option value="standard">Standard Report</option>
+          <option value="query">Custom Query</option>
+        </select>
+      </div>
+      
+      <div id="standardReportConfig" style="display: none;">
+        <div class="form-group">
+          <label class="form-label">Report Type</label>
+          <select id="reportType" class="form-select">
+            <option value="">Select report...</option>
+            <option value="profitAndLoss">Profit and Loss</option>
+            <option value="balanceSheet">Balance Sheet</option>
+            <option value="trialBalance">Trial Balance</option>
+            <option value="transactionListByDate">Transaction List by Date</option>
+            <option value="salesByCustomer">Sales by Customer</option>
+          </select>
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">Date Range</label>
+          <select id="dateRange" class="form-select" onchange="onDateRangeChange()">
+            <option value="ThisMonth">This Month</option>
+            <option value="LastMonth">Last Month</option>
+            <option value="ThisQuarter">This Quarter</option>
+            <option value="LastQuarter">Last Quarter</option>
+            <option value="ThisYear">This Year</option>
+            <option value="LastYear">Last Year</option>
+            <option value="custom">Custom Range</option>
+          </select>
+        </div>
+        
+        <div id="customDateRange" style="display: none;">
+          <div class="form-group">
+            <label class="form-label">Start Date</label>
+            <input type="date" id="startDate" class="form-input">
+          </div>
+          <div class="form-group">
+            <label class="form-label">End Date</label>
+            <input type="date" id="endDate" class="form-input">
+          </div>
+        </div>
+      </div>
+      
+      <div id="queryConfig" style="display: none;">
+        <div class="form-group">
+          <label class="form-label">
+            Query
+            <span class="tooltip">ℹ️
+              <span class="tooltiptext">Example: SELECT * FROM Customer WHERE Active = true ORDERBY DisplayName</span>
+            </span>
+          </label>
+          <textarea id="queryText" class="form-textarea" placeholder="SELECT * FROM Entity WHERE ..."></textarea>
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">Max Results</label>
+          <input type="number" id="maxResults" class="form-input" value="1000" min="1" max="1000">
+        </div>
+      </div>
+      
+      <div class="form-group">
+        <label class="form-label">Target Sheet</label>
+        <select id="targetSheet" class="form-select"></select>
+        <div class="help-text">Choose an existing sheet or create a new one for the dataset output.</div>
+      </div>
 
-  <div class="section">
-    <h2>Credentials</h2>
-    <div class="info-box">
-      <strong>Redirect URI:</strong>
-      <div id="redirectUri" style="word-break: break-all;"></div>
-      <div class="small" style="margin-top:6px;">Add this URI to your Intuit app configuration before attempting to connect.</div>
+      <div class="form-group" id="newSheetNameGroup" style="display: none;">
+        <label class="form-label">New Sheet Name</label>
+        <input type="text" id="newSheetName" class="form-input" placeholder="Leave blank to use dataset name">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Anchor Cell</label>
+        <input type="text" id="anchorCell" class="form-input" value="A1">
+        <div class="help-text">Data writes starting at this cell.</div>
+      </div>
+
+      <div class="checkbox-group">
+        <input type="checkbox" id="allowResize" checked>
+        <label for="allowResize">Auto-resize columns after write</label>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Named Range (optional)</label>
+        <input type="text" id="namedRange" class="form-input" placeholder="Use or create a named range">
+      </div>
+      
+      <div class="button-group">
+        <button class="action" onclick="createDataset()">Create Dataset</button>
+        <button onclick="closeModal('createDatasetModal')">Cancel</button>
+      </div>
     </div>
-    <label for="clientId">Client ID</label>
-    <input type="text" id="clientId" placeholder="Paste your QuickBooks Client ID">
-
-    <label for="clientSecret">Client Secret</label>
-    <input type="password" id="clientSecret" placeholder="Paste your QuickBooks Client Secret">
-
-    <label for="environment">Environment</label>
-    <select id="environment">
-      <option value="sandbox">Sandbox</option>
-      <option value="production">Production</option>
-    </select>
-
-    <div class="stored-value">
-      Stored Client ID: <code id="storedClientId">None</code><br>
-      Stored Client Secret: <code id="storedClientSecret">None</code>
-    </div>
-
-    <button id="saveBtn">Save Credentials</button>
   </div>
-
-  <div class="toast" id="toast"></div>
-
+  
+  <!-- Edit Dataset Modal -->
+  <div id="editDatasetModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 class="modal-title">Edit Dataset</h3>
+        <span class="close" onclick="closeModal('editDatasetModal')">&times;</span>
+      </div>
+      
+      <div id="editDatasetForm">
+        <!-- Form will be populated dynamically -->
+      </div>
+      
+      <div class="button-group">
+        <button class="action" onclick="updateDataset()">Save Changes</button>
+        <button onclick="closeModal('editDatasetModal')">Cancel</button>
+      </div>
+    </div>
+  </div>
+  
   <script>
-    const initialState = <?!= initialStateJson ?>;
+    const initialState = <?!= initialStateJson ?> || {};
     let state = initialState;
 
+    let isConnected = state.status ? state.status.isConnected : false;
+    let initialTab = state.initialTab || 'datasets';
+    let currentDatasets = Array.isArray(state.datasets) ? state.datasets.slice() : [];
+    let selectedDatasetId = null;
+    let currentJob = null;
+    let jobPollInterval = null;
+    let settingsLoaded = false;
+    let availableSheets = [];
+
+    function loadAvailableSheets() {
+      google.script.run
+        .withSuccessHandler(function(sheets) {
+          availableSheets = Array.isArray(sheets) ? sheets : [];
+          refreshSheetSelectors();
+        })
+        .withFailureHandler(function(error) {
+          console.error('Error loading sheets:', error);
+        })
+        .getAvailableSheets();
+    }
+
+    function refreshSheetSelectors() {
+      const createSelect = document.getElementById('targetSheet');
+      const createValue = createSelect ? createSelect.value : '__create_new__';
+      renderSheetOptions('targetSheet', createValue, false);
+      const editSelect = document.getElementById('editTargetSheet');
+      const editValue = editSelect ? editSelect.value : '__create_new__';
+      renderSheetOptions('editTargetSheet', editValue, true);
+    }
+
+    function renderSheetOptions(selectId, selectedValue, includeCurrent = true) {
+      const select = document.getElementById(selectId);
+      if (!select) return;
+
+      const previousValue = selectedValue || select.value;
+      const options = ['<option value="__create_new__">Create new sheet</option>'];
+
+      availableSheets.forEach(sheet => {
+        const value = sheet.id != null ? sheet.id.toString() : '';
+        options.push(`<option value="${value}">${sheet.name}</option>`);
+      });
+
+      select.innerHTML = options.join('');
+
+      if (previousValue && previousValue !== '__create_new__') {
+        const exists = availableSheets.some(sheet => (sheet.id != null ? sheet.id.toString() : '') === previousValue);
+        if (!exists && includeCurrent) {
+          const label = getSheetNameById(previousValue) || previousValue;
+          const option = document.createElement('option');
+          option.value = previousValue;
+          option.textContent = `${label} (missing)`;
+          select.appendChild(option);
+        }
+        select.value = previousValue;
+      } else {
+        select.value = '__create_new__';
+      }
+
+      toggleNewSheetName(select, selectId === 'targetSheet' ? 'newSheetNameGroup' : 'editNewSheetNameGroup');
+    }
+
+    function getSheetNameById(id) {
+      const sheet = availableSheets.find(s => (s.id != null ? s.id.toString() : '') === (id != null ? id.toString() : ''));
+      return sheet ? sheet.name : '';
+    }
+
+    function toggleNewSheetName(selectElement, groupId) {
+      const group = document.getElementById(groupId);
+      if (!group) return;
+      if (!selectElement) {
+        group.style.display = 'none';
+        return;
+      }
+      const value = selectElement.value;
+      group.style.display = value === '__create_new__' ? '' : 'none';
+    }
+
+    // Initialize
+    document.addEventListener('DOMContentLoaded', function() {
+      updateConnectionUI();
+      if (Array.isArray(currentDatasets) && currentDatasets.length) {
+        updateDatasetList();
+        updateSchedulesList();
+      }
+      if (isConnected) {
+        loadDatasets();
+        loadRecentLogs();
+      }
+      attachSettingsListeners();
+      loadAvailableSheets();
+      loadSettings();
+      const defaultTab = (initialTab && typeof initialTab === 'string') ? initialTab : 'datasets';
+      switchTab(defaultTab);
+    });
+    
+    // Connection management
     const statusPill = document.getElementById('statusPill');
     const statusDetails = document.getElementById('statusDetails');
     const redirectUri = document.getElementById('redirectUri');
@@ -219,43 +1078,56 @@
     const refreshBtn = document.getElementById('refreshBtn');
     const testBtn = document.getElementById('testBtn');
     const testResult = document.getElementById('testResult');
+    const saveBtn = document.getElementById('saveBtn');
     const toast = document.getElementById('toast');
 
-    function updateUI() {
+    function updateConnectionUI() {
       const status = state.status || {};
+      isConnected = Boolean(status.isConnected);
       redirectUri.textContent = state.redirectUri || '';
       storedClientId.textContent = status.hasCredentials ? status.clientId : 'None';
       storedClientSecret.textContent = status.hasCredentials ? status.clientSecret : 'None';
+      if (!status.hasCredentials) {
+        clientIdInput.value = '';
+      }
       environmentSelect.value = status.environment || 'sandbox';
 
       if (status.isConnected) {
         statusPill.textContent = 'Connected';
-        statusPill.classList.remove('disconnected');
         statusPill.classList.add('connected');
+        statusPill.classList.remove('disconnected');
         let details = 'Tokens stored for QuickBooks Online.';
         if (status.companyName) {
-          details += `\nCompany: ${status.companyName}`;
+          details += `
+Company: ${status.companyName}`;
         }
         if (status.realmId) {
-          details += `\nRealm ID: ${status.realmId}`;
+          details += `
+Realm ID: ${status.realmId}`;
         }
         if (status.lastConnectedAt) {
-          details += `\nLast connected: ${new Date(status.lastConnectedAt).toLocaleString()}`;
+          details += `
+Last connected: ${new Date(status.lastConnectedAt).toLocaleString()}`;
         }
         statusDetails.textContent = details;
       } else {
         statusPill.textContent = 'Disconnected';
-        statusPill.classList.remove('connected');
         statusPill.classList.add('disconnected');
+        statusPill.classList.remove('connected');
         statusDetails.textContent = 'Enter your credentials, save them, and then click Connect to start the OAuth flow.';
+        testResult.style.display = 'none';
       }
 
-      connectBtn.disabled = !status.hasCredentials;
+      connectBtn.disabled = !status.hasCredentials || status.isConnected;
       disconnectBtn.disabled = !status.isConnected;
       testBtn.disabled = !status.isConnected;
+      refreshBtn.disabled = false;
     }
 
     function showToast(message, isError = false) {
+      if (!toast) {
+        return;
+      }
       toast.textContent = message;
       toast.classList.toggle('error', Boolean(isError));
       toast.classList.add('show');
@@ -267,84 +1139,915 @@
       showToast(message, true);
     }
 
-    document.getElementById('saveBtn').addEventListener('click', () => {
+    if (saveBtn) {
+      saveBtn.addEventListener('click', () => {
+        const payload = {
+          clientId: clientIdInput.value.trim(),
+          clientSecret: clientSecretInput.value.trim(),
+          environment: environmentSelect.value
+        };
+
+        google.script.run
+          .withSuccessHandler((newStatus) => {
+            state.status = newStatus;
+            clientSecretInput.value = '';
+            showToast('Credentials saved.');
+            updateConnectionUI();
+            if (state.status && state.status.isConnected) {
+              loadDatasets();
+              loadRecentLogs();
+            }
+          })
+          .withFailureHandler(handleError)
+          .saveConnectionSettings(payload);
+      });
+    }
+
+    if (connectBtn) {
+      connectBtn.addEventListener('click', () => {
+        google.script.run
+          .withSuccessHandler(({ authorizationUrl }) => {
+            if (!authorizationUrl) {
+              showToast('Failed to create authorization URL.', true);
+              return;
+            }
+            const popup = window.open(authorizationUrl, '_blank');
+            if (!popup) {
+              showToast('Allow pop-ups for this site to continue.', true);
+            } else {
+              showToast('Complete the QuickBooks authorization in the new tab.');
+            }
+          })
+          .withFailureHandler(handleError)
+          .startAuthorization();
+      });
+    }
+
+    if (refreshBtn) {
+      refreshBtn.addEventListener('click', () => {
+        google.script.run
+          .withSuccessHandler((newStatus) => {
+            state.status = newStatus;
+            showToast('Status updated.');
+            updateConnectionUI();
+            if (state.status && state.status.isConnected) {
+              loadDatasets();
+              loadRecentLogs();
+            }
+          })
+          .withFailureHandler(handleError)
+          .refreshConnectionStatus();
+      });
+    }
+
+    if (disconnectBtn) {
+      disconnectBtn.addEventListener('click', () => {
+        google.script.run
+          .withSuccessHandler((newStatus) => {
+            state.status = newStatus;
+            showToast('Disconnected from QuickBooks.');
+            updateConnectionUI();
+            currentDatasets = [];
+            updateDatasetList();
+          })
+          .withFailureHandler(handleError)
+          .disconnectFromQuickBooks();
+      });
+    }
+
+    if (testBtn) {
+      testBtn.addEventListener('click', () => {
+        if (testResult) {
+          testResult.style.display = 'block';
+          testResult.textContent = 'Checking…';
+        }
+        google.script.run
+          .withSuccessHandler((result) => {
+            if (!testResult) return;
+            if (result.success) {
+              testResult.textContent = `Success! ${result.companyName} (Realm ${result.realmId || 'unknown'})`;
+            } else {
+              testResult.textContent = `Failed: ${result.message}`;
+            }
+          })
+          .withFailureHandler((err) => {
+            if (testResult) {
+              testResult.textContent = err && err.message ? err.message : String(err);
+            }
+          })
+          .runConnectionTest();
+      });
+    }
+
+    updateConnectionUI();
+
+    // Dataset management
+    function loadDatasets() {
+      google.script.run
+        .withSuccessHandler(function(datasets) {
+          currentDatasets = datasets;
+          updateDatasetList();
+          updateSchedulesList();
+        })
+        .withFailureHandler(showError)
+        .getDatasets();
+    }
+    
+    function updateDatasetList() {
+      const listDiv = document.getElementById('datasetList');
+      
+      if (currentDatasets.length === 0) {
+        listDiv.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-state-icon">📊</div>
+            <div>No datasets configured</div>
+            <div style="font-size: 12px; margin-top: 8px;">Create a dataset to start importing data from QuickBooks</div>
+          </div>
+        `;
+        return;
+      }
+      
+      listDiv.innerHTML = currentDatasets.map(dataset => `
+        <div class="dataset-item ${dataset.id === selectedDatasetId ? 'selected' : ''}" 
+             onclick="selectDataset('${dataset.id}')">
+          <div class="dataset-info">
+            <div class="dataset-name">${dataset.name}</div>
+            <div class="dataset-type">
+              ${dataset.type === 'standard' ? '📊 ' + formatReportType(dataset.params.reportType) : '🔍 Query: ' + dataset.params.query.substring(0, 50) + '...'}
+            </div>
+          </div>
+          <div class="dataset-actions">
+            ${dataset.schedule && dataset.schedule.enabled ? '<span title="Scheduled">🕐</span>' : ''}
+            <button class="icon-button" onclick="editDataset('${dataset.id}'); event.stopPropagation();" title="Edit">✏️</button>
+            <button class="icon-button" onclick="deleteDataset('${dataset.id}'); event.stopPropagation();" title="Delete">🗑️</button>
+          </div>
+        </div>
+      `).join('');
+    }
+    
+    function selectDataset(datasetId) {
+      selectedDatasetId = datasetId;
+      updateDatasetList();
+      
+      const dataset = currentDatasets.find(d => d.id === datasetId);
+      if (dataset) {
+        updateRunSection(dataset);
+      }
+    }
+    
+    function updateRunSection(dataset) {
+      const runSection = document.getElementById('runSection');
+      
+      runSection.innerHTML = `
+        <div class="form-group">
+          <strong>${dataset.name}</strong>
+          ${dataset.lastWrite ? `
+            <div class="help-text">
+              Last run: ${new Date(dataset.lastWrite.wroteAt).toLocaleString()}<br>
+              Rows: ${dataset.lastWrite.rows}, Columns: ${dataset.lastWrite.cols}
+            </div>
+          ` : '<div class="help-text">Never run</div>'}
+        </div>
+        
+        <div class="schedule-config">
+          <div class="checkbox-group">
+            <input type="checkbox" id="enableSchedule" ${dataset.schedule && dataset.schedule.enabled ? 'checked' : ''}>
+            <label for="enableSchedule">Enable scheduled refresh</label>
+          </div>
+          
+          <div id="scheduleOptions" style="${dataset.schedule && dataset.schedule.enabled ? '' : 'display: none;'}">
+            <div class="form-group">
+              <label class="form-label">Frequency</label>
+              <select id="scheduleFreq" class="form-select">
+                <option value="hourly" ${dataset.schedule && dataset.schedule.freq === 'hourly' ? 'selected' : ''}>Hourly</option>
+                <option value="daily" ${dataset.schedule && dataset.schedule.freq === 'daily' ? 'selected' : ''}>Daily</option>
+                <option value="weekly" ${dataset.schedule && dataset.schedule.freq === 'weekly' ? 'selected' : ''}>Weekly</option>
+                <option value="monthly" ${dataset.schedule && dataset.schedule.freq === 'monthly' ? 'selected' : ''}>Monthly</option>
+              </select>
+            </div>
+            
+            <div class="form-group" id="timeOfDayGroup" style="${dataset.schedule && dataset.schedule.freq !== 'hourly' ? '' : 'display: none;'}">
+              <label class="form-label">Time</label>
+              <input type="time" id="scheduleTime" class="form-input" value="${dataset.schedule ? dataset.schedule.timeOfDay : '09:00'}">
+            </div>
+          </div>
+          
+          <button class="action" onclick="updateSchedule('${dataset.id}')">Update Schedule</button>
+        </div>
+        
+        <div class="button-group">
+          <button class="action" onclick="runDataset('${dataset.id}')">Run Now</button>
+        </div>
+        
+        <div id="jobStatus" style="display: none;"></div>
+      `;
+      
+      // Add event listeners
+      document.getElementById('enableSchedule').addEventListener('change', function() {
+        document.getElementById('scheduleOptions').style.display = this.checked ? '' : 'none';
+      });
+      
+      document.getElementById('scheduleFreq').addEventListener('change', function() {
+        document.getElementById('timeOfDayGroup').style.display = this.value === 'hourly' ? 'none' : '';
+      });
+    }
+    
+    function showCreateDatasetModal() {
+      loadAvailableSheets();
+      document.getElementById('createDatasetModal').style.display = 'block';
+      renderSheetOptions('targetSheet', '__create_new__', false);
+      const targetSelect = document.getElementById('targetSheet');
+      targetSelect.onchange = function() {
+        toggleNewSheetName(this, 'newSheetNameGroup');
+      };
+      toggleNewSheetName(targetSelect, 'newSheetNameGroup');
+      document.getElementById('newSheetName').value = '';
+      document.getElementById('anchorCell').value = 'A1';
+      document.getElementById('allowResize').checked = true;
+      document.getElementById('namedRange').value = '';
+      document.getElementById('datasetName').focus();
+    }
+
+    function closeModal(modalId) {
+      document.getElementById(modalId).style.display = 'none';
+      // Clear form
+      if (modalId === 'createDatasetModal') {
+        document.getElementById('datasetName').value = '';
+        document.getElementById('datasetType').value = '';
+        document.getElementById('standardReportConfig').style.display = 'none';
+        document.getElementById('queryConfig').style.display = 'none';
+        const targetSelect = document.getElementById('targetSheet');
+        if (targetSelect) {
+          targetSelect.value = '__create_new__';
+        }
+        toggleNewSheetName(targetSelect, 'newSheetNameGroup');
+        document.getElementById('newSheetName').value = '';
+        document.getElementById('anchorCell').value = 'A1';
+        document.getElementById('allowResize').checked = true;
+        document.getElementById('namedRange').value = '';
+      }
+    }
+    
+    function onDatasetTypeChange() {
+      const type = document.getElementById('datasetType').value;
+      document.getElementById('standardReportConfig').style.display = type === 'standard' ? '' : 'none';
+      document.getElementById('queryConfig').style.display = type === 'query' ? '' : 'none';
+    }
+    
+    function onDateRangeChange() {
+      const range = document.getElementById('dateRange').value;
+      document.getElementById('customDateRange').style.display = range === 'custom' ? '' : 'none';
+    }
+    
+    function createDataset() {
+      const name = document.getElementById('datasetName').value.trim();
+      const type = document.getElementById('datasetType').value;
+      
+      if (!name) {
+        showError('Please enter a dataset name');
+        return;
+      }
+      
+      if (!type) {
+        showError('Please select a dataset type');
+        return;
+      }
+      
+      let params = {};
+      const targetSelect = document.getElementById('targetSheet');
+      const selectedSheetId = targetSelect ? targetSelect.value : '__create_new__';
+      const newSheetName = document.getElementById('newSheetName').value.trim();
+      const anchorCell = (document.getElementById('anchorCell').value || 'A1').trim();
+      const allowResize = document.getElementById('allowResize').checked;
+      const namedRange = document.getElementById('namedRange').value.trim();
+
+      let sheetName = '';
+      if (selectedSheetId === '__create_new__') {
+        sheetName = newSheetName || name;
+      } else {
+        sheetName = getSheetNameById(selectedSheetId) || name;
+      }
+
+      let target = {
+        sheetId: selectedSheetId !== '__create_new__' ? selectedSheetId : '',
+        sheetName: sheetName,
+        anchorA1: anchorCell ? anchorCell.toUpperCase() : 'A1',
+        allowResize: allowResize,
+        namedRange: namedRange
+      };
+      
+      if (type === 'standard') {
+        const reportType = document.getElementById('reportType').value;
+        if (!reportType) {
+          showError('Please select a report type');
+          return;
+        }
+        
+        params.reportType = reportType;
+        
+        const dateRange = document.getElementById('dateRange').value;
+        if (dateRange === 'custom') {
+          params.start_date = document.getElementById('startDate').value;
+          params.end_date = document.getElementById('endDate').value;
+          
+          if (!params.start_date || !params.end_date) {
+            showError('Please select start and end dates');
+            return;
+          }
+        } else {
+          params.date_macro = dateRange;
+        }
+      } else if (type === 'query') {
+        const query = document.getElementById('queryText').value.trim();
+        if (!query) {
+          showError('Please enter a query');
+          return;
+        }
+        
+        params.query = query;
+      }
+      
+      const dataset = {
+        name: name,
+        type: type,
+        params: params,
+        target: target,
+        pagination: {
+          startPosition: 1,
+          maxResults: parseInt(document.getElementById('maxResults')?.value || 1000),
+          fetchAll: false
+        }
+      };
+      
+      // Show loading
+      const button = event.target;
+      button.disabled = true;
+      button.innerHTML = 'Creating... <span class="loading"></span>';
+      
+      google.script.run
+        .withSuccessHandler(function(result) {
+          closeModal('createDatasetModal');
+          loadDatasets();
+          showSuccess('Dataset created successfully');
+          selectDataset(result.id);
+        })
+        .withFailureHandler(function(error) {
+          showError(error);
+          button.disabled = false;
+          button.textContent = 'Create Dataset';
+        })
+        .createDataset(dataset);
+    }
+    
+    function editDataset(datasetId) {
+      const dataset = currentDatasets.find(d => d.id === datasetId);
+      if (!dataset) return;
+
+      loadAvailableSheets();
+
+      const target = dataset.target || {};
+      const selectedSheetId = target.sheetId || '';
+      const anchorCell = target.anchorA1 || 'A1';
+      const allowResize = target.allowResize !== false;
+      const namedRange = target.namedRange || '';
+      const newSheetNameValue = !selectedSheetId ? (target.sheetName || dataset.name) : '';
+
+      // Populate edit form
+      const formDiv = document.getElementById('editDatasetForm');
+      formDiv.innerHTML = `
+        <input type="hidden" id="editDatasetId" value="${dataset.id}">
+        
+        <div class="form-group">
+          <label class="form-label">Dataset Name</label>
+          <input type="text" id="editDatasetName" class="form-input" value="${dataset.name}">
+        </div>
+        
+        ${dataset.type === 'standard' ? `
+          <div class="form-group">
+            <label class="form-label">Report Type</label>
+            <select id="editReportType" class="form-select">
+              <option value="profitAndLoss" ${dataset.params.reportType === 'profitAndLoss' ? 'selected' : ''}>Profit and Loss</option>
+              <option value="balanceSheet" ${dataset.params.reportType === 'balanceSheet' ? 'selected' : ''}>Balance Sheet</option>
+              <option value="trialBalance" ${dataset.params.reportType === 'trialBalance' ? 'selected' : ''}>Trial Balance</option>
+              <option value="transactionListByDate" ${dataset.params.reportType === 'transactionListByDate' ? 'selected' : ''}>Transaction List by Date</option>
+              <option value="salesByCustomer" ${dataset.params.reportType === 'salesByCustomer' ? 'selected' : ''}>Sales by Customer</option>
+            </select>
+          </div>
+        ` : `
+          <div class="form-group">
+            <label class="form-label">Query</label>
+            <textarea id="editQueryText" class="form-textarea">${dataset.params.query}</textarea>
+          </div>
+        `}
+
+        <div class="form-group">
+          <label class="form-label">Target Sheet</label>
+          <select id="editTargetSheet" class="form-select"></select>
+          <div class="help-text">Change where this dataset writes data.</div>
+        </div>
+
+        <div class="form-group" id="editNewSheetNameGroup" style="display: none;">
+          <label class="form-label">New Sheet Name</label>
+          <input type="text" id="editNewSheetName" class="form-input" value="${newSheetNameValue}">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Anchor Cell</label>
+          <input type="text" id="editAnchorCell" class="form-input" value="${anchorCell}">
+        </div>
+
+        <div class="checkbox-group">
+          <input type="checkbox" id="editAllowResize" ${allowResize ? 'checked' : ''}>
+          <label for="editAllowResize">Auto-resize columns after write</label>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Named Range (optional)</label>
+          <input type="text" id="editNamedRange" class="form-input" value="${namedRange}">
+        </div>
+      `;
+      
+      renderSheetOptions('editTargetSheet', selectedSheetId, true);
+      const editSelect = document.getElementById('editTargetSheet');
+      editSelect.onchange = function() {
+        toggleNewSheetName(this, 'editNewSheetNameGroup');
+      };
+      toggleNewSheetName(editSelect, 'editNewSheetNameGroup');
+      if (!selectedSheetId && newSheetNameValue) {
+        document.getElementById('editNewSheetName').value = newSheetNameValue;
+      }
+
+      document.getElementById('editDatasetModal').style.display = 'block';
+    }
+
+    function updateDataset() {
+      const datasetId = document.getElementById('editDatasetId').value;
+      const dataset = currentDatasets.find(d => d.id === datasetId);
+      if (!dataset) return;
+      
+      const updates = {
+        name: document.getElementById('editDatasetName').value.trim()
+      };
+      
+      if (dataset.type === 'standard') {
+        updates.params = {
+          ...dataset.params,
+          reportType: document.getElementById('editReportType').value
+        };
+      } else {
+        updates.params = {
+          ...dataset.params,
+          query: document.getElementById('editQueryText').value.trim()
+        };
+      }
+
+      const editSelect = document.getElementById('editTargetSheet');
+      const selectedSheetId = editSelect ? editSelect.value : '__create_new__';
+      const newSheetName = (document.getElementById('editNewSheetName')?.value || '').trim();
+      const anchorCell = (document.getElementById('editAnchorCell')?.value || 'A1').trim();
+      const allowResize = document.getElementById('editAllowResize')?.checked;
+      const namedRange = (document.getElementById('editNamedRange')?.value || '').trim();
+
+      let sheetName;
+      if (selectedSheetId === '__create_new__') {
+        sheetName = newSheetName || updates.name || dataset.name;
+      } else {
+        sheetName = getSheetNameById(selectedSheetId) || dataset.target?.sheetName || dataset.name;
+      }
+
+      updates.target = {
+        ...dataset.target,
+        sheetId: selectedSheetId !== '__create_new__' ? selectedSheetId : '',
+        sheetName: sheetName,
+        anchorA1: anchorCell ? anchorCell.toUpperCase() : 'A1',
+        allowResize: allowResize !== false,
+        namedRange: namedRange
+      };
+
+      const button = event.target;
+      button.disabled = true;
+      button.innerHTML = 'Saving... <span class="loading"></span>';
+      
+      google.script.run
+        .withSuccessHandler(function(result) {
+          closeModal('editDatasetModal');
+          loadDatasets();
+          showSuccess('Dataset updated successfully');
+        })
+        .withFailureHandler(function(error) {
+          showError(error);
+          button.disabled = false;
+          button.textContent = 'Save Changes';
+        })
+        .updateDataset(datasetId, updates);
+    }
+    
+    function deleteDataset(datasetId) {
+      const dataset = currentDatasets.find(d => d.id === datasetId);
+      if (!dataset) return;
+      
+      if (!confirm(`Are you sure you want to delete "${dataset.name}"?`)) {
+        return;
+      }
+      
+      google.script.run
+        .withSuccessHandler(function() {
+          loadDatasets();
+          showSuccess('Dataset deleted successfully');
+          if (selectedDatasetId === datasetId) {
+            selectedDatasetId = null;
+            document.getElementById('runSection').innerHTML = '<p style="color: #666; text-align: center;">Select a dataset above to run</p>';
+          }
+        })
+        .withFailureHandler(showError)
+        .deleteDataset(datasetId);
+    }
+    
+    function runDataset(datasetId) {
+      const button = event.target;
+      button.disabled = true;
+      button.innerHTML = 'Starting... <span class="loading"></span>';
+      
+      google.script.run
+        .withSuccessHandler(function(job) {
+          currentJob = job;
+          button.style.display = 'none';
+          updateJobStatus();
+          startJobPolling();
+        })
+        .withFailureHandler(function(error) {
+          showError(error);
+          button.disabled = false;
+          button.textContent = 'Run Now';
+        })
+        .runDataset(datasetId);
+    }
+    
+    function updateJobStatus() {
+      if (!currentJob) return;
+      
+      const statusDiv = document.getElementById('jobStatus');
+      statusDiv.style.display = 'block';
+      
+      const progress = currentJob.progress || 0;
+      const statusClass = currentJob.status === 'failed' ? 'error-message' : 
+                         currentJob.status === 'completed' ? 'success-message' : '';
+      
+      statusDiv.innerHTML = `
+        <div class="job-status">
+          <div><strong>Status:</strong> ${currentJob.status}</div>
+          <div class="job-progress">
+            <div class="progress-bar">
+              <div class="progress-fill" style="width: ${progress}%">${progress}%</div>
+            </div>
+          </div>
+          <div class="job-message ${statusClass}">${currentJob.message || 'Processing...'}</div>
+        </div>
+      `;
+      
+      if (currentJob.status === 'completed' || currentJob.status === 'failed') {
+        stopJobPolling();
+        setTimeout(() => {
+          document.querySelector('#runSection button').style.display = '';
+          if (currentJob.status === 'completed') {
+            loadDatasets();
+          }
+        }, 2000);
+      }
+    }
+    
+    function startJobPolling() {
+      if (jobPollInterval) return;
+      
+      jobPollInterval = setInterval(() => {
+        if (!currentJob || currentJob.status === 'completed' || currentJob.status === 'failed') {
+          stopJobPolling();
+          return;
+        }
+        
+        google.script.run
+          .withSuccessHandler(function(job) {
+            if (job) {
+              currentJob = job;
+              updateJobStatus();
+            }
+          })
+          .getJobStatus(currentJob.id);
+      }, 1000);
+    }
+    
+    function stopJobPolling() {
+      if (jobPollInterval) {
+        clearInterval(jobPollInterval);
+        jobPollInterval = null;
+      }
+    }
+    
+    function updateSchedule(datasetId) {
+      const dataset = currentDatasets.find(d => d.id === datasetId);
+      if (!dataset) return;
+      
+      const enabled = document.getElementById('enableSchedule').checked;
+      const freq = document.getElementById('scheduleFreq').value;
+      const timeOfDay = document.getElementById('scheduleTime').value;
+      
+      const updates = {
+        schedule: {
+          enabled: enabled,
+          freq: freq,
+          timeOfDay: timeOfDay
+        }
+      };
+      
+      const button = event.target;
+      button.disabled = true;
+      button.innerHTML = 'Updating... <span class="loading"></span>';
+      
+      google.script.run
+        .withSuccessHandler(function(result) {
+          loadDatasets();
+          showSuccess('Schedule updated successfully');
+          button.disabled = false;
+          button.textContent = 'Update Schedule';
+        })
+        .withFailureHandler(function(error) {
+          showError(error);
+          button.disabled = false;
+          button.textContent = 'Update Schedule';
+        })
+        .updateDataset(datasetId, updates);
+    }
+    
+    // Schedules tab
+    function updateSchedulesList() {
+      const listDiv = document.getElementById('schedulesList');
+      listDiv.innerHTML = '<p style="color: #666;">Loading schedule status...</p>';
+
+      google.script.run
+        .withSuccessHandler(function(status) {
+          if (!status || status.error) {
+            listDiv.innerHTML = '<p style="color: #c62828;">Unable to load schedule status.</p>';
+            if (status && status.error) {
+              console.error(status.error);
+            }
+            return;
+          }
+
+          const summaryHtml = `
+            <div class="schedule-summary">
+              <div><strong>${status.scheduledDatasets}</strong> of ${status.totalDatasets} datasets scheduled</div>
+              <div><strong>${status.activeTriggers}</strong> active triggers (${status.remainingTriggers} of ${status.maxTriggers} remaining)</div>
+            </div>
+          `;
+
+          const warnings = [];
+          if (status.orphanedSchedules > 0) {
+            warnings.push(`${status.orphanedSchedules} scheduled dataset${status.orphanedSchedules === 1 ? '' : 's'} missing triggers`);
+          }
+          if (status.limitExceeded) {
+            warnings.push('Time-driven trigger limit reached. Disable a schedule before adding new ones.');
+          } else if (status.limitWarning) {
+            warnings.push('Approaching time-driven trigger limit. Consider removing unused schedules.');
+          }
+
+          const warningHtml = warnings.length
+            ? warnings.map(w => `<div class="schedule-warning">⚠️ ${w}</div>`).join('')
+            : '';
+
+          let schedulesHtml = '';
+          if (!status.schedules.length) {
+            schedulesHtml = '<div class="empty-state"><div class="empty-state-icon">🕐</div><div>No schedules configured</div></div>';
+          } else {
+            schedulesHtml = status.schedules.map(schedule => {
+              const warningClass = schedule.triggerExists ? '' : 'schedule-item--warning';
+              const statusClass = schedule.triggerExists ? 'schedule-status success' : 'schedule-status warning';
+              const statusText = schedule.triggerExists ? 'Trigger active' : 'Trigger missing - auto-repair in progress';
+              const nextRunText = schedule.nextRun ? `<div class="schedule-next">Next: ${schedule.nextRun}</div>` : '';
+              return `
+                <div class="schedule-item ${warningClass}">
+                  <div class="schedule-details">
+                    <div class="dataset-name">${schedule.datasetName}</div>
+                    <div class="schedule-meta">${formatScheduleFrequency(schedule.frequency, schedule.timeOfDay, schedule.dayOfWeek, schedule.dayOfMonth)}</div>
+                    <div class="${statusClass}">${statusText}</div>
+                    ${nextRunText}
+                  </div>
+                  <div class="schedule-actions">
+                    <button class="action" onclick="testScheduledRun('${schedule.datasetId}'); event.stopPropagation();">Test Run</button>
+                  </div>
+                </div>
+              `;
+            }).join('');
+          }
+
+          listDiv.innerHTML = summaryHtml + warningHtml + schedulesHtml;
+        })
+        .withFailureHandler(function(error) {
+          showError(error);
+          listDiv.innerHTML = '<p style="color: #c62828;">Failed to load schedule status.</p>';
+        })
+        .getScheduleStatus();
+    }
+    
+    function testScheduledRun(datasetId) {
+      const button = event.target;
+      button.disabled = true;
+      button.innerHTML = 'Testing... <span class="loading"></span>';
+      
+      google.script.run
+        .withSuccessHandler(function(result) {
+          if (result.success) {
+            showSuccess('Test run completed');
+          } else {
+            showError(result.error);
+          }
+          button.disabled = false;
+          button.textContent = 'Test Run';
+        })
+        .withFailureHandler(function(error) {
+          showError(error);
+          button.disabled = false;
+          button.textContent = 'Test Run';
+        })
+        .testScheduledRun(datasetId);
+    }
+    
+    // Logs tab
+    function loadRecentLogs() {
+      google.script.run
+        .withSuccessHandler(function(logs) {
+          const logsDiv = document.getElementById('recentLogs');
+          
+          if (logs.length === 0) {
+            logsDiv.innerHTML = '<p style="color: #666; text-align: center;">No recent logs</p>';
+            return;
+          }
+          
+          logsDiv.innerHTML = logs.map(log => `
+            <div style="padding: 8px; border-bottom: 1px solid #eee; font-size: 12px;">
+              <div style="display: flex; justify-content: space-between;">
+                <span><strong>${log.action}</strong></span>
+                <span style="color: #666;">${new Date(log.ts_iso).toLocaleString()}</span>
+              </div>
+              ${log.dataset_id ? `<div style="color: #666;">Dataset: ${log.dataset_id}</div>` : ''}
+              ${log.status === 'error' ? `<div style="color: #d32f2f;">Error: ${log.error_message}</div>` : ''}
+              ${log.status === 'success' && log.rows ? `<div style="color: #388e3c;">Rows: ${log.rows}</div>` : ''}
+            </div>
+          `).join('');
+        })
+        .withFailureHandler(showError)
+        .getRecentLogs(20);
+    }
+    
+    function viewFullLogs() {
+      google.script.run.showLogsSheet();
+    }
+    
+    // Settings tab
+    function attachSettingsListeners() {
+      ['enableNotifications'].forEach(id => {
+        const element = document.getElementById(id);
+        if (!element) return;
+        element.addEventListener('change', function() {
+          if (!settingsLoaded) return;
+          persistAddonSettings(true);
+        });
+      });
+    }
+
+    function loadSettings() {
+      google.script.run
+        .withSuccessHandler(function(result) {
+          if (result && result.success) {
+            document.getElementById('enableNotifications').checked = !!result.enableNotifications;
+          } else if (result && result.error) {
+            showToast(result.error, true);
+          }
+          settingsLoaded = true;
+        })
+        .withFailureHandler(function(error) {
+          settingsLoaded = true;
+          handleError(error);
+        })
+        .getAddonSettings();
+    }
+
+    function persistAddonSettings(showMessage = true) {
       const payload = {
-        clientId: clientIdInput.value.trim(),
-        clientSecret: clientSecretInput.value.trim(),
-        environment: environmentSelect.value
+        enableNotifications: document.getElementById('enableNotifications').checked
       };
 
       google.script.run
-        .withSuccessHandler((newStatus) => {
-          state.status = newStatus;
-          clientSecretInput.value = '';
-          showToast('Credentials saved.');
-          updateUI();
-        })
-        .withFailureHandler(handleError)
-        .saveConnectionSettings(payload);
-    });
-
-    connectBtn.addEventListener('click', () => {
-      google.script.run
-        .withSuccessHandler(({ authorizationUrl }) => {
-          if (!authorizationUrl) {
-            showToast('Failed to create authorization URL.', true);
-            return;
-          }
-          const popup = window.open(authorizationUrl, '_blank');
-          if (!popup) {
-            showToast('Allow pop-ups for this site to continue.', true);
-          } else {
-            showToast('Complete the QuickBooks authorization in the new tab.');
+        .withSuccessHandler(function(result) {
+          if (result && result.success) {
+            if (showMessage) {
+              showToast('Add-on settings saved.');
+            }
+          } else if (result && result.error) {
+            showToast(result.error, true);
           }
         })
         .withFailureHandler(handleError)
-        .startAuthorization();
-    });
+        .saveAddonSettings(payload);
+    }
 
-    refreshBtn.addEventListener('click', () => {
-      google.script.run
-        .withSuccessHandler((newStatus) => {
-          state.status = newStatus;
-          showToast('Status updated.');
-          updateUI();
-        })
-        .withFailureHandler(handleError)
-        .refreshConnectionStatus();
-    });
 
-    disconnectBtn.addEventListener('click', () => {
-      google.script.run
-        .withSuccessHandler((newStatus) => {
-          state.status = newStatus;
-          testResult.style.display = 'none';
-          showToast('Disconnected from QuickBooks.');
-          updateUI();
-        })
-        .withFailureHandler(handleError)
-        .disconnectFromQuickBooks();
-    });
+    // Tab switching
+    function switchTab(tabName, button) {
+      // Update tab buttons
+      document.querySelectorAll('.tab').forEach(tab => {
+        tab.classList.remove('active');
+      });
+      const activeButton = button || document.querySelector(`.tab[data-tab="${tabName}"]`);
+      if (activeButton) {
+        activeButton.classList.add('active');
+      }
+      
+      // Update tab content
+      document.querySelectorAll('.tab-content').forEach(content => {
+        content.classList.remove('active');
+      });
+      const tabContent = document.getElementById(tabName + 'Tab');
+      if (tabContent) {
+        tabContent.classList.add('active');
+      }
+      
+      // Load tab-specific data
+      if (tabName === 'logs' && isConnected) {
+        loadRecentLogs();
+      } else if (tabName === 'schedules' && isConnected) {
+        updateSchedulesList();
+      }
+    }
+    
+    // Utility functions
+    function showError(error) {
+      console.error(error);
+      const message = error && error.message ? error.message : String(error);
+      showToast(message, true);
+    }
+    
+    function showSuccess(message) {
+      showToast(message, false);
+    }
+    
+    function formatReportType(type) {
+      const names = {
+        'profitAndLoss': 'Profit and Loss',
+        'balanceSheet': 'Balance Sheet',
+        'trialBalance': 'Trial Balance',
+        'transactionListByDate': 'Transaction List',
+        'salesByCustomer': 'Sales by Customer'
+      };
+      return names[type] || type;
+    }
 
-    testBtn.addEventListener('click', () => {
-      testResult.style.display = 'block';
-      testResult.textContent = 'Checking…';
+    function formatScheduleFrequency(freq, timeOfDay, dayOfWeek, dayOfMonth) {
+      const normalized = (freq || '').toLowerCase();
+      const timeText = timeOfDay ? ` at ${timeOfDay}` : '';
+      switch (normalized) {
+        case 'hourly':
+          return 'Hourly';
+        case 'daily':
+          return `Daily${timeText}`.trim();
+        case 'weekly':
+          return `Weekly on ${formatWeekDayName(dayOfWeek)}${timeText}`.trim();
+        case 'monthly':
+          return `Monthly on day ${dayOfMonth || 1}${timeText}`.trim();
+        default:
+          return freq || 'Custom';
+      }
+    }
 
-      google.script.run
-        .withSuccessHandler((result) => {
-          if (result.success) {
-            testResult.textContent = `Success! ${result.companyName} (Realm ${result.realmId || 'unknown'})`;
-          } else {
-            testResult.textContent = `Failed: ${result.message}`;
-          }
-        })
-        .withFailureHandler((err) => {
-          testResult.textContent = err && err.message ? err.message : String(err);
-        })
-        .runConnectionTest();
-    });
+    function formatWeekDayName(dayOfWeek) {
+      const map = {
+        'SUNDAY': 'Sunday',
+        'MONDAY': 'Monday',
+        'TUESDAY': 'Tuesday',
+        'WEDNESDAY': 'Wednesday',
+        'THURSDAY': 'Thursday',
+        'FRIDAY': 'Friday',
+        'SATURDAY': 'Saturday',
+        '0': 'Sunday',
+        '1': 'Monday',
+        '2': 'Tuesday',
+        '3': 'Wednesday',
+        '4': 'Thursday',
+        '5': 'Friday',
+        '6': 'Saturday'
+      };
+      if (!dayOfWeek) {
+        return 'Monday';
+      }
+      const key = dayOfWeek.toString().toUpperCase();
+      return map[key] || 'Monday';
+    }
 
-    updateUI();
+    // Modal handling
+    window.onclick = function(event) {
+      if (event.target.classList.contains('modal')) {
+        event.target.style.display = 'none';
+      }
+    };
   </script>
 </body>
 </html>

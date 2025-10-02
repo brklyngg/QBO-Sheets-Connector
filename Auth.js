@@ -203,3 +203,19 @@ function sanitizeHtml(value) {
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;');
 }
+
+function isConnected() {
+  return getConnectionStatus().isConnected;
+}
+
+function getConnectionDetails() {
+  return getConnectionStatus();
+}
+
+function getOAuthCredentials() {
+  const { clientId, clientSecret } = getStoredOAuthCredentials();
+  return {
+    clientId: clientId,
+    hasClientSecret: Boolean(clientSecret)
+  };
+}

@@ -5,7 +5,7 @@ import { spawn } from 'child_process';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const CODE_FILE = path.resolve(__dirname, '..', 'Code.gs');
+const CODE_FILE = path.resolve(__dirname, '..', 'Code.js');
 
 function incrementVersion(currentVersion) {
   const parts = currentVersion.split('.').map(Number);
@@ -26,7 +26,7 @@ function updateScriptVersion() {
   const match = source.match(versionRegex);
 
   if (!match) {
-    throw new Error('Could not locate SCRIPT_VERSION constant in Code.gs.');
+    throw new Error('Could not locate SCRIPT_VERSION constant in Code.js.');
   }
 
   const currentVersion = match[1];

@@ -2,7 +2,7 @@
  * Spreadsheet entry points that bridge the lean auth-first build with the legacy feature set.
  */
 
-const SCRIPT_VERSION = '1.1.1';
+const SCRIPT_VERSION = '1.1.2';
 const SIDEBAR_TITLE = 'QBO Connection';
 const SIDEBAR_WIDTH = 360;
 const MENU_TITLE = `QBO Connection v${SCRIPT_VERSION}`;

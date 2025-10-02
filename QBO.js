@@ -16,6 +16,36 @@ const QBO_SUPPORTED_REPORTS = {
   salesByCustomer: 'CustomerSales'
 };
 
+// Normalize stored macro keys to the strings that QBO expects (with spaces/hyphenation).
+const QBO_DATE_MACRO_MAP = {
+  ThisMonth: 'This Month',
+  LastMonth: 'Last Month',
+  ThisQuarter: 'This Calendar Quarter',
+  LastQuarter: 'Last Calendar Quarter',
+  ThisYear: 'This Calendar Year',
+  LastYear: 'Last Calendar Year',
+  ThisYearToDate: 'This Calendar Year-to-date',
+  LastYearToDate: 'Last Calendar Year-to-date',
+  ThisQuarterToDate: 'This Calendar Quarter-to-date',
+  LastQuarterToDate: 'Last Calendar Quarter-to-date',
+  ThisMonthToDate: 'This Month-to-date',
+  LastMonthToDate: 'Last Month-to-date'
+};
+
+function mapDateMacro(value) {
+  if (!value) {
+    return value;
+  }
+  return QBO_DATE_MACRO_MAP[value] || value;
+}
+
+function appendQueryParam(queryParams, key, value) {
+  if (value === undefined || value === null || value === '') {
+    return;
+  }
+  queryParams.push(`${key}=${encodeURIComponent(value)}`);
+}
+
 const QBO_QUERYABLE_ENTITIES = [
   'Account', 'Bill', 'BillPayment', 'Budget', 'Class', 'CreditMemo',
   'Customer', 'Department', 'Deposit', 'Employee', 'Estimate', 'Invoice',
@@ -142,14 +172,14 @@ function runStandardReport(reportType, params = {}) {
 
     const queryParams = [];
     const minorVersion = getQboMinorVersion();
-    queryParams.push(`minorversion=${minorVersion}`);
+    appendQueryParam(queryParams, 'minorversion', minorVersion);
 
-    if (params.start_date) queryParams.push(`start_date=${params.start_date}`);
-    if (params.end_date) queryParams.push(`end_date=${params.end_date}`);
-    if (params.date_macro) queryParams.push(`date_macro=${params.date_macro}`);
-    if (params.accounting_method) queryParams.push(`accounting_method=${params.accounting_method}`);
-    if (params.summarize_column_by) queryParams.push(`summarize_column_by=${params.summarize_column_by}`);
-    if (params.columns) queryParams.push(`columns=${params.columns}`);
+    if (params.start_date) appendQueryParam(queryParams, 'start_date', params.start_date);
+    if (params.end_date) appendQueryParam(queryParams, 'end_date', params.end_date);
+    if (params.date_macro) appendQueryParam(queryParams, 'date_macro', mapDateMacro(params.date_macro));
+    if (params.accounting_method) appendQueryParam(queryParams, 'accounting_method', params.accounting_method);
+    if (params.summarize_column_by) appendQueryParam(queryParams, 'summarize_column_by', params.summarize_column_by);
+    if (params.columns) appendQueryParam(queryParams, 'columns', params.columns);
 
     const url = `${getQboBaseUrl()}/${QBO_API_VERSION}/company/${realmId}/reports/${reportName}?${queryParams.join('&')}`;
 
